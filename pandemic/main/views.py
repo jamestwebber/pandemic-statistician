@@ -66,13 +66,13 @@ def get_game_state(game, draw_phase=True):
         if turn.epidemic:
             epidemics += 1
             stack[turn.epidemic[0].name] = 0
-            if not draw_phase:
-                stack = {city_name:(s + (s >= 0)) for city_name,s in stack.items()}
+            # if not draw_phase:
+            stack = {city_name:(s + (s >= 0)) for city_name,s in stack.items()}
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack[turn.epidemic[1].name] = 0
-                if not draw_phase:
-                    stack = {city_name: (s + (s >= 0)) for city_name, s in stack.items()}
+                # if not draw_phase:
+                stack = {city_name: (s + (s >= 0)) for city_name,s in stack.items()}
 
         if turn.resilient_pop:
             stack[turn.resilient_pop.name] = -1
