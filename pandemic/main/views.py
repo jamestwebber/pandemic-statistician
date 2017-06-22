@@ -57,7 +57,7 @@ def get_game_state(game, draw_phase=True):
     drawn_cards = set() # only for COdA cards
     epidemics = 0
     vaccines = 0
-    for turn in turns:
+    for i,turn in enumerate(turns):
         drawn_cards.update(city.name for city in turn.draws)
 
         if turn.x_vaccine:
@@ -66,13 +66,13 @@ def get_game_state(game, draw_phase=True):
         if turn.epidemic:
             epidemics += 1
             stack[turn.epidemic[0].name] = 0
-            # if not draw_phase:
-            stack = {city_name:(s + (s >= 0)) for city_name,s in stack.items()}
+            if i < len(turns) - 1 or (not draw_phase):
+                stack = {city_name:(s + (s >= 0)) for city_name,s in stack.items()}
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack[turn.epidemic[1].name] = 0
-                # if not draw_phase:
-                stack = {city_name: (s + (s >= 0)) for city_name,s in stack.items()}
+                if i < len(turns) - 1 or (not draw_phase):
+                    stack = {city_name: (s + (s >= 0)) for city_name,s in stack.items()}
 
         if turn.resilient_pop:
             stack[turn.resilient_pop.name] = -1
