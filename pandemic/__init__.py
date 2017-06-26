@@ -7,6 +7,8 @@ from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from config import config
 
+import click
+
 import constants
 
 bootstrap = Bootstrap()
@@ -56,3 +58,15 @@ def initdb_command():
     """Initializes the database."""
     init_db()
     print('Initialized the database.')
+
+
+@app.cli.command('newchar')
+@click.option('--first', help='First name', type=unicode)
+@click.option('--middle', help='Middle name/initial/nickname', type=unicode)
+@click.option('--last', help='Character name/last name', type=unicode)
+@click.option('--icon', help='Glyphicon icon', type=unicode)
+def newchar_command(first, middle, last, icon):
+    import models
+    db.session.add(models.Character(name=last, first_name=first, middle_name=middle, icon=icon))
+    db.session.commit()
+    print('Added new character: welcome, {} {} {}!'.format(first, middle, last))

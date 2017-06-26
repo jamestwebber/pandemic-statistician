@@ -14,7 +14,7 @@
     {{ form.players(class="form-control", **kwargs)|safe }}
     {%- if form.players.errors %}
       {% for error in form.players.errors %}
-        {% if not error is mapping %}
+        {% if error is not mapping %}
           <p class="help-block h3">{{error}}</p>
         {% endif %}
       {%- endfor %}
