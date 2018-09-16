@@ -1,10 +1,10 @@
-# pandemic-~~dispatcher~~JUDAS
+# pandemic-statistician
 
-This is an ever-so-slightly overbuilt online assistant for the board game [Pandemic Legacy](http://www.zmangames.com/store/p31/Pandemic_Legacy.html). This was built for a specific gaming group and may contain **spoilers**, so be warned!
+The missing character! Every team of world-traveling disease fighters needs someone to do the stats.
+
+This is an ever-so-slightly overbuilt online assistant for the board game [Pandemic Legacy](http://www.zmangames.com/store/p31/Pandemic_Legacy.html) as well as [Season 2](https://zmangames.com/en/products/pandemic-legacy-season-2/). This has been built for a specific group and contains a lot of **spoilers**, especially if you explore the git history!
 
 The project is built as a Flask website, and the structure was strongly influenced by the [Flasky](https://github.com/miguelgrinberg/flasky) project to learn what I was doing. Some pieces of the code were copied wholesale and might not even work, I haven't tried to use them yet. It uses Flask, Flask-Bootstrap, Flask-SQLAlchemy (and SQLAlchemy), Flask-WTF (and WTForms), and Flask-Nav.
-
-Pull requests are welcome! Please bear in mind that we haven't finished the game yet (we're currently in August), so I can't add functionality that would spoil the game (and I don't want to hear about it either).
 
 Also I hope this doesn't violate [zmangames](http://www.zmangames.com)'s copyright, but it feels like fair use to me? You should definitely buy Pandemic Legacy if you haven't already, it's really good. You can tell because I made a thing for it.
 
@@ -16,7 +16,8 @@ Based on the previous game session (in which the server got into a broken state 
 
 I've added character selection and tracking, so it will remember who played each character in each game. This required a little bit of Python and a whole lot of JavaScript to make the interface work nicely. I've also added epidemic tracking, so you will know how likely it is to draw the next epidemic (assuming you set up the deck in the way described in the rules).
 
-Main TODOs:
- - Deploy to a cloud server rather than running locally (this may require some authentication though)
- - Implement some game mechanics that we aren't using right now but might come up in the future (e.g. certain funded events)
- - Possibly: customize the experience based on the game month
+### TODOs
+
+* Update to Python 3
+* Update game mechanics for Season 2
+* Make it much easier to correct mistakes in a game, potentially by making a better admin interface
