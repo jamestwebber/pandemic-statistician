@@ -1,49 +1,60 @@
 import os
-import cStringIO
 import fractions
 
 from collections import defaultdict, Counter
 
 from flask import g, session, render_template, redirect, url_for, flash
 
-from .. import db
-from .. import constants as c
-from ..models import Game, City, Turn, PlayerSession, Character
+from pandemic import db
+import pandemic.constants as c
+from pandemic.models import Game, City, Turn, PlayerSession, Character
 
-from . import main
-from . import forms
+import pandemic.main as main
+import pandemic.main.forms as forms
 
 
-@main.app_template_filter('to_percent')
+@main.app_template_filter("to_percent")
 def to_percent(v):
-    return (u'{:.1f}% ({})'.format(v * 100.0, fractions.Fraction.from_float(v).limit_denominator())
-            if v > 0 else u'-')
+    return (
+        "{:.1f}% ({})".format(
+            v * 100.0, fractions.Fraction.from_float(v).limit_denominator()
+        )
+        if v > 0
+        else "-"
+    )
 
 
-@main.app_template_filter('danger_level')
+@main.app_template_filter("danger_level")
 def danger_level(v):
     if v > 0.66:
-        return u'bg-danger'
+        return "bg-danger"
     elif v > 0.33:
-        return u'bg-warning'
+        return "bg-warning"
     else:
-        return u''
+        return ""
 
 
-@main.app_template_filter('color_i')
+@main.app_template_filter("color_i")
 def color_i(color):
-    return {'blue': 0, 'yellow': 1, 'black': 2, 'red': 3}[color]
+    return {"blue": 0, "yellow": 1, "black": 2, "red": 3}[color]
 
 
 def get_game_state(game, draw_phase=True):
-    turns = (Turn.query.filter_by(game_id=game.id)
-             .filter(Turn.turn_num <= game.turn_num)
-             .order_by(Turn.turn_num).all())
+    turns = (
+        Turn.query.filter_by(game_id=game.id)
+        .filter(Turn.turn_num <= game.turn_num)
+        .order_by(Turn.turn_num)
+        .all()
+    )
 
     # deck size after dealing the initial hands
-    post_setup_deck_size = (len(c.CITIES) + c.EPIDEMICS
-                            + game.funding_rate + game.extra_cards
-                            - c.NUM_PLAYERS * c.INITIAL_HAND_SIZE[c.NUM_PLAYERS])
+    post_setup_deck_size = (
+        len(c.CITIES)
+        + c.EPIDEMICS
+        + game.funding_rate
+        + game.extra_cards
+        - c.NUM_PLAYERS * c.INITIAL_HAND_SIZE[c.NUM_PLAYERS]
+    )
     # number of post-setup cards drawn so far
     if game.turn_num == -1:
         ps_cards_drawn = 0
@@ -52,12 +63,12 @@ def get_game_state(game, draw_phase=True):
     # how many cards are left
     deck_size = post_setup_deck_size - ps_cards_drawn
 
-    stack = {city_name:1 for city_name in c.CITIES}
+    stack = {city_name: 1 for city_name in c.CITIES}
 
-    drawn_cards = set() # only for COdA cards
+    drawn_cards = set()  # only for COdA cards
     epidemics = 0
     vaccines = 0
-    for i,turn in enumerate(turns):
+    for i, turn in enumerate(turns):
         drawn_cards.update(city.name for city in turn.draws)
 
         if turn.x_vaccine:
@@ -67,23 +78,27 @@ def get_game_state(game, draw_phase=True):
             epidemics += 1
             stack[turn.epidemic[0].name] = 0
             if i < len(turns) - 1 or (not draw_phase):
-                stack = {city_name:(s + (s >= 0)) for city_name,s in stack.items()}
+                stack = {city_name: (s + (s >= 0)) for city_name, s in stack.items()}
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack[turn.epidemic[1].name] = 0
                 if i < len(turns) - 1 or (not draw_phase):
-                    stack = {city_name: (s + (s >= 0)) for city_name,s in stack.items()}
+                    stack = {
+                        city_name: (s + (s >= 0)) for city_name, s in stack.items()
+                    }
 
         if turn.resilient_pop:
             stack[turn.resilient_pop.name] = -1
 
         for city in sorted(turn.infections, key=lambda city: stack[city.name]):
             if stack[city.name] != 1:
-                flash(u'WARNING: looks like a city was infected too early, could be a mistake')
+                flash(
+                    "WARNING: looks like a city was infected too early, could be a mistake"
+                )
             stack[city.name] = 0
 
             if not any(stack[city_name] == 1 for city_name in stack):
-                stack = {city_name:(s - (s > 0)) for city_name,s in stack.items()}
+                stack = {city_name: (s - (s > 0)) for city_name, s in stack.items()}
 
     epi_cards_seen = epidemics + vaccines
 
@@ -122,7 +137,7 @@ def get_game_state(game, draw_phase=True):
 
     city_probs = defaultdict(float)
 
-    for i in range(1,7):
+    for i in range(1, 7):
         n = float(len(stack_d[i]))
         for city in stack_d[i]:
             city_probs[city] = min(1.0, infection_rate / n)
@@ -132,68 +147,88 @@ def get_game_state(game, draw_phase=True):
             break
 
     max_i = max(i for i in stack_d if stack_d[i])
-    epi_probs = defaultdict(float, {city_name: 1.0 / len(stack_d[max_i]) for city_name in stack_d[max_i]})
+    epi_probs = defaultdict(
+        float, {city_name: 1.0 / len(stack_d[max_i]) for city_name in stack_d[max_i]}
+    )
 
-    city_data = [dict(name=city_name, color=city_color,
-                      discard=(stack[city_name] < 1),
-                      stack=stack[city_name],
-                      inf_risk=city_probs[city_name],
-                      epi_risk=epi_probs[city_name],
-                      drawn=(city_name in drawn_cards))
-                 for city_name,city_color in c.CITIES.items()]
+    city_data = [
+        dict(
+            name=city_name,
+            color=city_color,
+            discard=(stack[city_name] < 1),
+            stack=stack[city_name],
+            inf_risk=city_probs[city_name],
+            epi_risk=epi_probs[city_name],
+            drawn=(city_name in drawn_cards),
+        )
+        for city_name, city_color in c.CITIES.items()
+    ]
 
-    return {'game_id': game.id, 'turn_num': game.turn_num,
-            'turns': turns, 'deck_size': deck_size, 'epi_risk': epidemic_risk,
-            'epidemics': epidemics, 'city_data': city_data}
+    return {
+        "game_id": game.id,
+        "turn_num": game.turn_num,
+        "turns": turns,
+        "deck_size": deck_size,
+        "epi_risk": epidemic_risk,
+        "epidemics": epidemics,
+        "city_data": city_data,
+    }
 
 
-@main.route('/', methods=('GET', 'POST'))
+@main.route("/", methods=("GET", "POST"))
 def begin():
     form = forms.BeginForm()
 
     if form.validate_on_submit():
-        game = Game(month=form.month.data,
-                    funding_rate=form.funding_rate.data,
-                    extra_cards=form.extra_cards.data,
-                    turn_num=-1)
+        game = Game(
+            month=form.month.data,
+            funding_rate=form.funding_rate.data,
+            extra_cards=form.extra_cards.data,
+            turn_num=-1,
+        )
 
         db.session.add(game)
         db.session.commit()
 
         for player_data in form.players.data:
-            player_char = Character.query.filter_by(name=player_data['character']).one()
-            player = PlayerSession(player_name=player_data['player_name'],
-                                   turn_num=int(player_data['turn_num']),
-                                   color_index=int(player_data['color_index']),
-                                   game_id=game.id, char_id=player_char.id)
+            player_char = Character.query.filter_by(name=player_data["character"]).one()
+            player = PlayerSession(
+                player_name=player_data["player_name"],
+                turn_num=int(player_data["turn_num"]),
+                color_index=int(player_data["color_index"]),
+                game_id=game.id,
+                char_id=player_char.id,
+            )
             db.session.add(player)
 
-        session['game_id'] = game.id
+        session["game_id"] = game.id
 
-        return redirect(url_for('.draw'))
+        return redirect(url_for(".draw"))
 
     return render_template("begin.html", form=form)
 
 
-@main.route('/draw', methods=('GET', 'POST'))
-@main.route('/draw/<int:game_id>', methods=('GET', 'POST'))
+@main.route("/draw", methods=("GET", "POST"))
+@main.route("/draw/<int:game_id>", methods=("GET", "POST"))
 def draw(game_id=None):
-    if not (game_id or session.get('game_id', None)):
-        flash(u'No game in progress', 'error')
-        return redirect(url_for('main.begin'))
+    if not (game_id or session.get("game_id", None)):
+        flash("No game in progress", "error")
+        return redirect(url_for("main.begin"))
     elif game_id:
-        session['game_id'] = game_id
+        session["game_id"] = game_id
 
-    game_id = session['game_id']
+    game_id = session["game_id"]
     game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
-        flash(u'No game with that ID', 'error')
-        session['game_id'] = None
-        return redirect(url_for('.begin'))
+        flash("No game with that ID", "error")
+        session["game_id"] = None
+        return redirect(url_for(".begin"))
 
     turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
     if turn is None:
-        turn = Turn(game_id=game.id, turn_num=game.turn_num, x_vaccine=False, resilient_pop=None)
+        turn = Turn(
+            game_id=game.id, turn_num=game.turn_num, x_vaccine=False, resilient_pop=None
+        )
         db.session.add(turn)
     else:
         # this could break the game state otherwise
@@ -212,39 +247,48 @@ def draw(game_id=None):
         turn.x_vaccine = bool(form.vaccine) and len(form.vaccine.data) == c.NUM_PLAYERS
         if form.epidemic and form.epidemic.data:
             turn.epidemic = [City.query.filter_by(name=form.epidemic.data).first()]
-            if 'second_epidemic' in form and form.second_epidemic.data:
-                turn.epidemic.append(City.query.filter_by(name=form.second_epidemic.data).first())
+            if "second_epidemic" in form and form.second_epidemic.data:
+                turn.epidemic.append(
+                    City.query.filter_by(name=form.second_epidemic.data).first()
+                )
 
         if form.cards.data:
             turn.draws = City.query.filter(City.name.in_(form.cards.data)).all()
 
         db.session.commit()
 
-        if form.resilient_population and len(form.resilient_population.data) == c.NUM_PLAYERS:
-            return redirect(url_for('.resilientpop'))
+        if (
+            form.resilient_population
+            and len(form.resilient_population.data) == c.NUM_PLAYERS
+        ):
+            return redirect(url_for(".resilientpop"))
         else:
-            return redirect(url_for('.infect'))
+            return redirect(url_for(".infect"))
 
-    return render_template("base_form.html", title=u'Draw Cards', game_state=game_state, form=form)
+    return render_template(
+        "base_form.html", title="Draw Cards", game_state=game_state, form=form
+    )
 
 
-@main.route('/resilientpop', methods=('GET', 'POST'))
+@main.route("/resilientpop", methods=("GET", "POST"))
 def resilientpop():
-    if session.get('game_id', None) is None:
-        flash(u'No game in progress', 'error')
-        return redirect(url_for('.begin'))
+    if session.get("game_id", None) is None:
+        flash("No game in progress", "error")
+        return redirect(url_for(".begin"))
 
-    game_id = session['game_id']
+    game_id = session["game_id"]
     game = Game.query.filter_by(id=game_id).first()
     if game is None:
-        flash(u'No game with that ID', 'error')
-        session['game_id'] = None
-        return redirect(url_for('.begin'))
+        flash("No game with that ID", "error")
+        session["game_id"] = None
+        return redirect(url_for(".begin"))
 
-    this_turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
+    this_turn = Turn.query.filter_by(
+        game_id=game.id, turn_num=game.turn_num
+    ).one_or_none()
     if this_turn is None:
-        flash(u'Need to draw cards first', 'error')
-        return redirect(url_for('.draw'))
+        flash("Need to draw cards first", "error")
+        return redirect(url_for(".draw"))
 
     game_state = get_game_state(game)
 
@@ -252,38 +296,46 @@ def resilientpop():
 
     if form.validate_on_submit():
         if form.game.data != game_id:
-            flash(u'Game ID did not match session', 'error')
-            return redirect(url_for('.begin'))
+            flash("Game ID did not match session", "error")
+            return redirect(url_for(".begin"))
 
-        this_turn.resilient_pop = City.query.filter_by(name=form.resilient_city.data).first()
+        this_turn.resilient_pop = City.query.filter_by(
+            name=form.resilient_city.data
+        ).first()
         db.session.commit()
 
-        return redirect(url_for('.infect'))
+        return redirect(url_for(".infect"))
 
-    return render_template("base_form.html", title=u'Select Resilient City', game_state=game_state, form=form)
+    return render_template(
+        "base_form.html",
+        title="Select Resilient City",
+        game_state=game_state,
+        form=form,
+    )
 
 
-
-@main.route('/infect', methods=('GET', 'POST'))
-@main.route('/infect/<int:game_id>', methods=('GET', 'POST'))
+@main.route("/infect", methods=("GET", "POST"))
+@main.route("/infect/<int:game_id>", methods=("GET", "POST"))
 def infect(game_id=None):
-    if not (game_id or session.get('game_id', None)):
-        flash(u'No game in progress', 'error')
-        return redirect(url_for('.begin'))
+    if not (game_id or session.get("game_id", None)):
+        flash("No game in progress", "error")
+        return redirect(url_for(".begin"))
     elif game_id:
-        session['game_id'] = game_id
+        session["game_id"] = game_id
 
-    game_id = session['game_id']
+    game_id = session["game_id"]
     game = Game.query.filter_by(id=game_id).first()
     if game is None:
-        flash(u'No game with that ID', 'error')
-        session['game_id'] = None
-        return redirect(url_for('.begin'))
+        flash("No game with that ID", "error")
+        session["game_id"] = None
+        return redirect(url_for(".begin"))
 
-    this_turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
+    this_turn = Turn.query.filter_by(
+        game_id=game.id, turn_num=game.turn_num
+    ).one_or_none()
     if this_turn is None:
-        flash(u'Not on the infection step right now', 'error')
-        return redirect(url_for('.draw'))
+        flash("Not on the infection step right now", "error")
+        return redirect(url_for(".draw"))
 
     game_state = get_game_state(game, False)
 
@@ -294,55 +346,61 @@ def infect(game_id=None):
 
     if form.validate_on_submit():
         if form.game.data != game_id:
-            flash(u'Game ID did not match session', 'error')
-            return redirect(url_for('.begin'))
+            flash("Game ID did not match session", "error")
+            return redirect(url_for(".begin"))
 
         if form.cities.data:
-            this_turn.infections = City.query.filter(City.name.in_(form.cities.data)).all()
+            this_turn.infections = City.query.filter(
+                City.name.in_(form.cities.data)
+            ).all()
 
         game.turn_num += 1
         db.session.commit()
 
-        return redirect(url_for('.draw'))
+        return redirect(url_for(".draw"))
 
-    return render_template("base_form.html", title=u'Infect Cities', game_state=game_state, form=form)
+    return render_template(
+        "base_form.html", title="Infect Cities", game_state=game_state, form=form
+    )
 
 
-@main.route('/history')
+@main.route("/history")
 def history():
     games = Game.query.all()
     return render_template("summaries.html", games=games)
 
 
-@main.route('/history/<int:game_id>')
+@main.route("/history/<int:game_id>")
 def game_history(game_id):
     game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
-        flash(u'No game with that ID', 'error')
-        return redirect(url_for('.history'))
+        flash("No game with that ID", "error")
+        return redirect(url_for(".history"))
 
-    return render_template("game_history.html", game=game, game_state=get_game_state(game))
+    return render_template(
+        "game_history.html", game=game, game_state=get_game_state(game)
+    )
 
 
-@main.route('/replay/<int:game_id>/<turn_num>', methods=('GET', 'POST'))
+@main.route("/replay/<int:game_id>/<turn_num>", methods=("GET", "POST"))
 def replay(game_id, turn_num):
     turn_num = int(turn_num)
     game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
-        flash(u'No game with that ID', 'error')
-        return redirect(url_for('.begin'))
+        flash("No game with that ID", "error")
+        return redirect(url_for(".begin"))
 
     form = forms.ReplayForm(game_id, game.characters)
 
     if form.validate_on_submit():
         if len(form.authorize.data) == c.NUM_PLAYERS:
-            session['game_id'] = game_id
+            session["game_id"] = game_id
             game.turn_num = turn_num
             db.session.commit()
 
-            return redirect(url_for('.draw'))
+            return redirect(url_for(".draw"))
         else:
-            flash(u'A replay was not authorized')
-            return redirect(url_for('.game_history', game_id=form.game.data))
+            flash("A replay was not authorized")
+            return redirect(url_for(".game_history", game_id=form.game.data))
 
-    return render_template("base_form.html", title=u'Redo Turn', form=form)
+    return render_template("base_form.html", title="Redo Turn", form=form)
