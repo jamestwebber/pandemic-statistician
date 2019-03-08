@@ -18,7 +18,7 @@ class PlayerSession(db.Model):
     character = db.relationship("Character", backref="games", lazy=True)
 
     def __repr__(self):
-        return u"<Game {} - {} - {}".format(
+        return "<Game {} - {} - {}".format(
             self.game_id, self.player_name, self.character.name
         )
 
@@ -33,7 +33,7 @@ class Game(db.Model):
     turns = db.relationship("Turn", backref="game", lazy="subquery")
 
     def __repr__(self):
-        return u"<Game {}, Month {}, Turn {}, FR {}>".format(
+        return "<Game {}, Month {}, Turn {}, FR {}>".format(
             self.id, self.month, self.turn_num, self.funding_rate
         )
 
@@ -47,7 +47,7 @@ class Character(db.Model):
     icon = db.Column(db.String(32), nullable=False)  # glyphicon used for buttons
 
     def __repr__(self):
-        return u"{} {} {}".format(self.first_name, self.middle_name, self.name)
+        return "{} {} {}".format(self.first_name, self.middle_name, self.name)
 
 
 # tables for many-to-many relationships
@@ -105,7 +105,7 @@ class Turn(db.Model):
     resilient_pop = db.relationship("City", lazy=True, backref="resilient_pops")
 
     def __repr__(self):
-        return u"<Turn {}: {} infected, {} drawn>".format(
+        return "<Turn {}: {} infected, {} drawn>".format(
             self.turn_num,
             ", ".join(city.name for city in self.infections)
             if self.infections
