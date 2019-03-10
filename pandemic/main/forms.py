@@ -19,10 +19,10 @@ from wtforms import (
 )
 from wtforms.validators import InputRequired, NumberRange, AnyOf
 
-import pandemic.constants as c
-from pandemic.models import Game, City, Turn
+from .. import constants as c
+from ..models import Game, City, Turn
 
-import pandemic.main.widgets as wdg
+from ..main import widgets as wdg
 
 
 def order_fields(fields, order):

@@ -9,7 +9,7 @@ from config import config
 
 import click
 
-import pandemic.constants as constants
+from . import constants
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
@@ -47,7 +47,7 @@ app = create_app(os.getenv("FLASK_CONFIG") or "default")
 
 
 def init_db():
-    import pandemic.models as models
+    from . import models
 
     db.create_all()
     db.session.add_all(
@@ -75,12 +75,12 @@ def initdb_command():
 
 
 @app.cli.command("newchar")
-@click.option("--first", help="First name", type=unicode)
-@click.option("--middle", help="Middle name/initial/nickname", type=unicode)
-@click.option("--last", help="Character name/last name", type=unicode)
-@click.option("--icon", help="Glyphicon icon", type=unicode)
+@click.option("--first", help="First name")
+@click.option("--middle", help="Middle name/initial/nickname")
+@click.option("--last", help="Character name/last name")
+@click.option("--icon", help="Glyphicon icon")
 def newchar_command(first, middle, last, icon):
-    import pandemic.models as models
+    from . import models
 
     db.session.add(
         models.Character(name=last, first_name=first, middle_name=middle, icon=icon)

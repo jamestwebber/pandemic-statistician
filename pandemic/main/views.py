@@ -5,12 +5,11 @@ from collections import defaultdict, Counter
 
 from flask import g, session, render_template, redirect, url_for, flash
 
-from pandemic import db
-import pandemic.constants as c
-from pandemic.models import Game, City, Turn, PlayerSession, Character
+from .. import db
+from .. import constants as c
+from ..models import Game, City, Turn, PlayerSession, Character
 
-import pandemic.main as main
-import pandemic.main.forms as forms
+from . import main, forms
 
 
 @main.app_template_filter("to_percent")
