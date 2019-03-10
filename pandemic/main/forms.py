@@ -39,7 +39,7 @@ class PlayerField(Form):
 class BeginForm(FlaskForm):
     month = SelectField(
         "Current Month",
-        choices=zip(c.MONTHS, c.MONTHS),
+        choices=list(zip(c.MONTHS, c.MONTHS)),
         validators=[InputRequired()],
         widget=wdg.select_month,
         description="The month for this game",
@@ -61,15 +61,9 @@ class BeginForm(FlaskForm):
         "Bonus Cards",
         default=0,
         validators=[InputRequired(), NumberRange(0)],
-        description="Number of other cards (e.g. experimental vaccines) in the deck",
+        description="Number of other cards (e.g. production cards) in the deck",
     )
     submit = SubmitField("Submit")
-
-    def validate_players(self, field):
-        if len(field.data) == c.NUM_PLAYERS and any(
-            ch["character"] == "TRAITOR" for ch in field.data
-        ):
-            raise ValidationError("Error: The Dispatcher is dead to us now")
 
 
 class DrawForm(FlaskForm):
@@ -79,19 +73,9 @@ class DrawForm(FlaskForm):
     second_epidemic = SelectField(
         "Epidemic", description="If a second epidemic was drawn"
     )
-    vaccine = SelectMultipleField(
-        "Experimental Vaccine",
-        widget=wdg.authorize_vaccine,
-        description="Authorization required for experimental vaccine",
-    )
-    cards = SelectMultipleField(
-        "COdA-403b Player Cards",
-        widget=wdg.select_cities,
-        description="{} city cards drawn".format(c.CODA_COLOR.capitalize()),
-    )
     resilient_population = SelectMultipleField(
         "Resilient Population",
-        widget=wdg.authorize_vaccine,
+        widget=wdg.authorization,
         description="Authorize Resilient Population",
     )
     submit = SubmitField("Submit")
@@ -103,15 +87,10 @@ class DrawForm(FlaskForm):
         self.game.data = game_state["game_id"]
 
         self.turn_num = game_state["turn_num"]
-        if self.turn_num == -1:
-            self.cards.description = "{} city cards in initial hands".format(
-                c.CODA_COLOR.capitalize()
-            )
 
         if game_state["epi_risk"] == 0.0 or self.turn_num == -1:
             del self.epidemic
             del self.second_epidemic
-            del self.vaccine
             del self.resilient_population
         else:
             max_stack = max(city["stack"] for city in game_state["city_data"])
@@ -127,38 +106,12 @@ class DrawForm(FlaskForm):
             else:
                 del self.second_epidemic
 
-            self.vaccine.choices = [
-                (ch.character.name, ("Yes", ch.color_index)) for ch in characters
-            ]
             self.resilient_population.choices = [
                 (ch.character.name, ("Yes", ch.color_index)) for ch in characters
             ]
 
-        cards = [
-            (city["name"], city["name"])
-            for city in game_state["city_data"]
-            if city["color"] == c.CODA_COLOR and not city["drawn"]
-        ]
-        self.cards.choices = cards
-
-    def validate_cards(self, field):
-        if self.turn_num == -1 and len(field.data) > (c.DRAW * c.NUM_PLAYERS):
-            field.data = []
-            raise ValidationError("You drew too many cards")
-
-        if (
-            self.turn_num > -1
-            and (len(field.data) + bool(self.epidemic and self.epidemic.data)) > c.DRAW
-        ):
-            field.data = []
-            raise ValidationError("You drew too many cards")
-
-    def validate_vaccine(self, field):
-        if 0 < len(field.data) < c.NUM_PLAYERS:
-            field.data = []
-            raise ValidationError("All players must authorize an experimental vaccine")
-
-    def validate_resilient_population(self, field):
+    @staticmethod
+    def validate_resilient_population(field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize Resilient Population")
@@ -166,8 +119,6 @@ class DrawForm(FlaskForm):
     def validate_second_epidemic(self, field):
         if field.data and not self.epidemic.data:
             raise ValidationError("For one epidemic, use the other selector")
-        elif field.data and field.data == self.epidemic.data:
-            raise ValidationError("The second epidemic can't be the same city")
 
 
 class SetupInfectForm(FlaskForm):
@@ -196,8 +147,8 @@ class SetupInfectForm(FlaskForm):
 
 class InfectForm(SetupInfectForm):
     skip_infection = SelectMultipleField(
-        "Quiet night/Sacrifice",
-        widget=wdg.authorize_vaccine,
+        "One quiet night",
+        widget=wdg.authorization,
         description="Skip this infection step",
     )
 
@@ -238,7 +189,8 @@ class InfectForm(SetupInfectForm):
         else:
             super(InfectForm, self).validate_cities(field)
 
-    def validate_skip_infection(self, field):
+    @staticmethod
+    def validate_skip_infection(field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize this decision")
@@ -265,7 +217,7 @@ class ResilientPopForm(FlaskForm):
 class ReplayForm(FlaskForm):
     authorize = SelectMultipleField(
         "Redo Turn?",
-        widget=wdg.authorize_vaccine,
+        widget=wdg.authorization,
         description="Authorization required to replay this turn",
     )
     submit = SubmitField("Submit")
@@ -278,7 +230,8 @@ class ReplayForm(FlaskForm):
         ]
         self.game.data = game_id
 
-    def validate_authorize(self, field):
+    @staticmethod
+    def validate_authorize(field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize this decision")

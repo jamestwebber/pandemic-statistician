@@ -126,7 +126,7 @@ def select_cities(field, **kwargs):
     return widgets.HTMLString("".join(html))
 
 
-def authorize_vaccine(field, **kwargs):
+def authorization(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
     html = [

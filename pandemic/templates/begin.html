@@ -18,13 +18,14 @@
   sortable('.js-grid', {
     forcePlaceholderSize: true,
     placeholderClass: 'btn col-xs-3 border',
-    connectWith: 'js-connected',
+    acceptFrom: '.js-grid-target',
     items: ':not(.border)'
   });
+
   sortable('.js-grid-target', {
     forcePlaceholderSize: true,
     placeholderClass: 'btn col-xs-12 border',
-    connectWith: 'js-connected',
+    acceptFrom: '.js-grid',
     items: ':not(.border)',
     maxItems: 1
   });
@@ -34,8 +35,7 @@
     placeholderClass: 'li border'
   });
 
-
-  var update_characters = function() {
+  let update_characters = function() {
     $('ol.js-player-grid li').each(
       function(index) {
         $(this).find('input[type="hidden"][name$="turn_num"]').attr("value", index);
@@ -44,15 +44,7 @@
       });
   };
 
-  sortable('.js-player-grid')[0].addEventListener('sortupdate', function(e) {
-    update_characters();
-  });
-
-  sortable('.js-grid-target')[0].addEventListener('sortupdate', function(e) {
-    update_characters();
-  });
-
-  update_characters();
+  $('#submit')[0].addEventListener('mousedown', update_characters);
 
   </script>
 {% endblock %}

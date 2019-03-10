@@ -96,21 +96,15 @@ class Turn(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     turn_num = db.Column(db.Integer)  # which turn this is
     game_id = db.Column(db.Integer, db.ForeignKey("games.id"), nullable=False)
-    x_vaccine = db.Column(
-        db.Boolean, nullable=False
-    )  # was an experimental vaccine used?
 
     # turns when this city was exiled using resilient population (one-to-many)
     res_pop_id = db.Column(db.Integer, db.ForeignKey("cities.id"), nullable=True)
     resilient_pop = db.relationship("City", lazy=True, backref="resilient_pops")
 
     def __repr__(self):
-        return "<Turn {}: {} infected, {} drawn>".format(
+        return "<Turn {}: {} infected>".format(
             self.turn_num,
             ", ".join(city.name for city in self.infections)
             if self.infections
             else "No cities",
-            ", ".join(city.name for city in self.draws)
-            if self.draws
-            else "No COdA cities",
         )

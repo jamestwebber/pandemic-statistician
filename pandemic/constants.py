@@ -7,72 +7,28 @@ from collections import OrderedDict, namedtuple
 
 CITIES = OrderedDict(
     [
-        ("Atlanta", "blue"),
-        ("Chicago", "blue"),
-        ("Essen", "blue"),
         ("London", "blue"),
-        ("Madrid", "blue"),
-        ("Milan", "blue"),
-        ("Montreal", "blue"),
         ("New York", "blue"),
-        ("Paris", "blue"),
-        ("San Francisco", "blue"),
-        ("St. Petersburg", "blue"),
         ("Washington", "blue"),
-        ("Bogotá", "yellow"),
-        ("Buenos Aires", "yellow"),
-        ("Johannesburg", "yellow"),
-        ("Khartoum", "yellow"),
-        ("Kinshasa", "yellow"),
+        ("Jacksonville", "yellow"),
         ("Lagos", "yellow"),
-        ("Lima", "yellow"),
-        ("Los Angeles", "yellow"),
-        ("Mexico City", "yellow"),
-        ("Miami", "yellow"),
-        ("Santiago", "yellow"),
         ("São Paulo", "yellow"),
-        ("Algiers", "black"),
-        ("Baghdad", "black"),
         ("Cairo", "black"),
-        ("Chennai", "black"),
-        ("Delhi", "black"),
         ("Istanbul", "black"),
-        ("Karachi", "black"),
-        ("Kolkata", "black"),
-        ("Moscow", "black"),
-        ("Mumbai", "black"),
-        ("Riyadh", "black"),
-        ("Tehran", "black"),
-        ("Bangkok", "red"),
-        ("Beijing", "red"),
-        ("Ho Chi Minh City", "red"),
-        ("Hong Kong", "red"),
-        ("Jakarta", "red"),
-        ("Manila", "red"),
-        ("Osaka", "red"),
-        ("Seoul", "red"),
-        ("Shanghai", "red"),
-        ("Sydney", "red"),
-        ("Taipei", "red"),
-        ("Tokyo", "red"),
+        ("Tripoli", "black"),
     ]
 )
+CARDS_PER_CITY = 3
 
 Character = namedtuple("Character", ("first_name", "middle_name", "icon"))
 
 CHARACTERS = OrderedDict(
     [
-        ("TRAITOR", Character("Shinji", '"Judas"', "glyphicon-fire")),
-        ("Researcher", Character("Rachel", "R", "glyphicon-search")),
-        ("Quarantine Specialist", Character("Quincy", "Q", "glyphicon-alert")),
-        ("Operations Expert", Character("Omar", "Obama", "glyphicon-home")),
-        ("Colonel", Character("Carlos", "Camino", "glyphicon-star")),
-        ("Generalist", Character("Samantha", "Q", "glyphicon-wrench")),
-        ("Medic", Character("", "", "glyphicon-plus-sign")),
-        ("Scientist", Character("", "", "glyphicon-education")),
-        ("Smith-Soldier", Character("Simón", '"Sparks"', "glyphicon-star-empty")),
-        ("Virologist", Character("Victoria", '"Valkyrie"', "glyphicon-certificate")),
-        ("Immunologist", Character("Icarus", "I", "glyphicon-ok-circle")),
+        ("Administrator", Character("Shinji", "Avengeant", "glyphicon-pencil")),
+        ("Instructor", Character("Isabelle", "Ivanka X", "glyphicon-education")),
+        ("Radio Operator", Character("Ronald", "O'Brian", "glyphicon-headphones")),
+        ("Laborer", Character("Lazarus", '"Larry" III³', "glyphicon-wrench")),
+        ("Farmer", Character("Furtle", "", "glyphicon-cutlery")),
     ]
 )
 
@@ -92,7 +48,7 @@ MONTHS = [
     "December",
 ]
 
-INFECTION_RATES = [2, 2, 2, 3, 3, 4, 4, 9]  # infection rates per epidemic
+INFECTION_RATES = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
 
 EPIDEMICS = 5  # number of epidemics in the deck
@@ -103,4 +59,3 @@ INITIAL_HAND_SIZE = {
     4: 2,
 }  # number of hands in initial hands, according to NUM_PLAYERS
 DRAW = 2  # draw two cards at a time
-CODA_COLOR = "yellow"  # color of the COdA virus

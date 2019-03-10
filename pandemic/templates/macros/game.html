@@ -131,17 +131,13 @@
     <div class="row col-sm-12 h3">
       <div class="row col-sm-1">#</div>
       <div class="row col-sm-4">Cities Infected</div>
-      <div class="row col-sm-3">COdA-403b Drawn</div>
       <div class="row col-sm-2">Epidemic?</div>
-      <div class="row col-sm-2">Vaccine?</div>
     </div>
     {%- for turn in game.turns %}
       <div class="row col-sm-12 h4">
         <div class="row col-sm-1"><a href={{ url_for('main.replay', game_id=game.id, turn_num=turn.turn_num) }}><span class="glyphicon glyphicon-backward" aria-hidden="true"></span> {{ turn.turn_num }}</a></div>
         <div class="row col-sm-4">{% if turn.infections %}{{ turn.infections|join(', ') }}{% else %}No cities{% endif %}</div>
-        <div class="row col-sm-3">{% if turn.draws %}{{ turn.draws|join(', ') }}{% else %}-{% endif %}</div>
         <div class="row col-sm-2">{% if turn.epidemic %}{{ turn.epidemic|join(', ') }}{% else %}-{% endif %}</div>
-        <div class="row col-sm-2">{% if turn.x_vaccine %}<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>{% endif %}</div>
       </div>
     {% else %}
       <div class="row col-sm-12">No turns have been played yet</div>

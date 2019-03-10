@@ -12,5 +12,6 @@ setup(
         "Flask-Bootstrap",
         "Flask-WTF",
         "Flask-nav",
+        "wtforms",
     ],
 )

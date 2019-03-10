@@ -64,15 +64,8 @@ def get_game_state(game, draw_phase=True):
 
     stack = {city_name: 1 for city_name in c.CITIES}
 
-    drawn_cards = set()  # only for COdA cards
     epidemics = 0
-    vaccines = 0
     for i, turn in enumerate(turns):
-        drawn_cards.update(city.name for city in turn.draws)
-
-        if turn.x_vaccine:
-            vaccines += 1
-
         if turn.epidemic:
             epidemics += 1
             stack[turn.epidemic[0].name] = 0
@@ -99,8 +92,6 @@ def get_game_state(game, draw_phase=True):
             if not any(stack[city_name] == 1 for city_name in stack):
                 stack = {city_name: (s - (s > 0)) for city_name, s in stack.items()}
 
-    epi_cards_seen = epidemics + vaccines
-
     epidemic_stacks = Counter((i % c.EPIDEMICS) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())
 
@@ -111,8 +102,8 @@ def get_game_state(game, draw_phase=True):
         epidemic_stacks[i] -= 1
 
     if game.turn_num > -1:
-        if i_block < epi_cards_seen:
-            if j_block < epi_cards_seen:
+        if i_block < epidemics:
+            if j_block < epidemics:
                 # this epidemic has already been drawn
                 epidemic_risk = 0.0
             else:
@@ -158,7 +149,6 @@ def get_game_state(game, draw_phase=True):
             stack=stack[city_name],
             inf_risk=city_probs[city_name],
             epi_risk=epi_probs[city_name],
-            drawn=(city_name in drawn_cards),
         )
         for city_name, city_color in c.CITIES.items()
     ]
@@ -226,15 +216,13 @@ def draw(game_id=None):
     turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
     if turn is None:
         turn = Turn(
-            game_id=game.id, turn_num=game.turn_num, x_vaccine=False, resilient_pop=None
+            game_id=game.id, turn_num=game.turn_num, resilient_pop=None
         )
         db.session.add(turn)
     else:
         # this could break the game state otherwise
-        turn.draws = []
         turn.epidemic = []
         turn.infections = []
-        turn.x_vaccine = False
 
     db.session.commit()
 
@@ -243,16 +231,12 @@ def draw(game_id=None):
     form = forms.DrawForm(game_state, game.characters)
 
     if form.validate_on_submit():
-        turn.x_vaccine = bool(form.vaccine) and len(form.vaccine.data) == c.NUM_PLAYERS
         if form.epidemic and form.epidemic.data:
             turn.epidemic = [City.query.filter_by(name=form.epidemic.data).first()]
             if "second_epidemic" in form and form.second_epidemic.data:
                 turn.epidemic.append(
                     City.query.filter_by(name=form.second_epidemic.data).first()
                 )
-
-        if form.cards.data:
-            turn.draws = City.query.filter(City.name.in_(form.cards.data)).all()
 
         db.session.commit()
 
