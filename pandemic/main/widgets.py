@@ -1,4 +1,3 @@
-
 from wtforms import widgets
 
 from .. import constants as c
@@ -71,32 +70,6 @@ def player_widget(field, **kwargs):
     if errors["character"]:
         html.append('<div class="col-xs-3">{}</div>'.format(errors["character"]))
 
-    return widgets.HTMLString("".join(html))
-
-
-def select_month(field, **kwargs):
-    kwargs.setdefault("type", "radio")
-    field_id = kwargs.pop("id", field.id)
-    html = [
-        "<div %s>"
-        % widgets.html_params(
-            id=field_id, class_="btn-group col-sm-12", data_toggle="buttons"
-        )
-    ]
-    for value, label, checked in field.iter_choices():
-        choice_id = "%s-%s" % (field_id, value)
-        options = dict(
-            kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"
-        )
-        if checked:
-            options["checked"] = "checked"
-        html.append(
-            (
-                '<div class="btn month col-sm-3"><input {} /> '
-                '<label for="{}">{}</label></div>'
-            ).format(widgets.html_params(**options), field_id, label)
-        )
-    html.append("</div>")
     return widgets.HTMLString("".join(html))
 
 

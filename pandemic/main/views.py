@@ -1,5 +1,8 @@
 import os
 import fractions
+import functools
+import operator as op
+import math
 
 from collections import defaultdict, Counter
 
@@ -33,9 +36,42 @@ def danger_level(v):
         return ""
 
 
+@main.app_template_filter("to_glyph")
+def to_glyph(v):
+    return c.INFECTION_GLYPHS.get(v, "glyphicon glyphicon-question-sign")
+
+
 @main.app_template_filter("color_i")
 def color_i(color):
     return {"blue": 0, "yellow": 1, "black": 2, "red": 3}[color]
+
+
+def resolve_epidemic(stack, epidemic_city, max_stack, inc_stack):
+    if stack[max_stack][epidemic_city] < 1:
+        flash("WARNING: this epidemic shouldn't be possible, check records!")
+    else:
+        stack[max_stack][epidemic_city] -= 1
+        stack[0][epidemic_city] += 1
+
+    if inc_stack:
+        for s in range(max_stack, -1, -1):
+            stack[s + 1] = stack[s]
+        stack[0] = Counter()
+
+
+def ncr(n, r):
+    r = min(r, n - r)
+    if r < 0:
+        return 0.0
+
+    numer = functools.reduce(op.mul, range(n, n - r, -1), 1)
+    denom = math.factorial(r)
+
+    return numer / denom
+
+
+def hg_pmf(k, M, n, N):
+    return ncr(n, k) * ncr(M - n, N - k) / ncr(M, N)
 
 
 def get_game_state(game, draw_phase=True):
@@ -48,7 +84,7 @@ def get_game_state(game, draw_phase=True):
 
     # deck size after dealing the initial hands
     post_setup_deck_size = (
-        len(c.CITIES)
+        c.BASE_DECK_SIZE
         + c.EPIDEMICS
         + game.funding_rate
         + game.extra_cards
@@ -62,35 +98,51 @@ def get_game_state(game, draw_phase=True):
     # how many cards are left
     deck_size = post_setup_deck_size - ps_cards_drawn
 
-    stack = {city_name: 1 for city_name in c.CITIES}
+    stack = defaultdict(Counter)
+    for city_name in c.CITIES:
+        stack[1][city_name] = c.CARDS_PER_CITY
 
     epidemics = 0
     for i, turn in enumerate(turns):
+        max_s = max(s for s in stack if sum(stack[s].values()) > 0)
+        inc_stack = i < len(turns) - 1 or (not draw_phase)
+
         if turn.epidemic:
             epidemics += 1
-            stack[turn.epidemic[0].name] = 0
-            if i < len(turns) - 1 or (not draw_phase):
-                stack = {city_name: (s + (s >= 0)) for city_name, s in stack.items()}
+            resolve_epidemic(stack, turn.epidemic[0].name, max_s, inc_stack)
+
             if len(turn.epidemic) == 2:
                 epidemics += 1
-                stack[turn.epidemic[1].name] = 0
-                if i < len(turns) - 1 or (not draw_phase):
-                    stack = {
-                        city_name: (s + (s >= 0)) for city_name, s in stack.items()
-                    }
+                resolve_epidemic(stack, turn.epidemic[1].name, max_s, inc_stack)
 
         if turn.resilient_pop:
-            stack[turn.resilient_pop.name] = -1
+            # TODO: could be two cards
+            stack[0][turn.resilient_pop.name] -= 1
+            stack[-1][turn.resilient_pop.name] += 1
 
-        for city in sorted(turn.infections, key=lambda city: stack[city.name]):
-            if stack[city.name] != 1:
+        infected_cities = sorted(
+            turn.infections,
+            key=lambda city: min(i for i in stack if stack[i][city.name] > 0),
+        )
+
+        for city in infected_cities:
+            if stack[1][city.name] < 1:
                 flash(
-                    "WARNING: looks like a city was infected too early, could be a mistake"
+                    "WARNING: looks like a city was infected too early, check records!"
                 )
-            stack[city.name] = 0
+            else:
+                stack[1][city.name] -= 1
+                stack[0][city.name] += 1
 
-            if not any(stack[city_name] == 1 for city_name in stack):
-                stack = {city_name: (s - (s > 0)) for city_name, s in stack.items()}
+            if sum(stack[1].values()) == 0:
+                for s in range(2, max_s + 1):
+                    stack[s - 1] = stack[s]
+                stack[max_s] = Counter()
+
+    stack = defaultdict(
+        list, {i: stack[i] for i in stack if sum(stack[i].values()) > 0}
+    )
+    max_s = max(stack)
 
     epidemic_stacks = Counter((i % c.EPIDEMICS) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())
@@ -121,32 +173,47 @@ def get_game_state(game, draw_phase=True):
 
     infection_rate = c.INFECTION_RATES[epidemics]
 
-    stack_d = dict()
-    for i in range(7):
-        stack_d[i] = {city_name for city_name in stack if stack[city_name] == i}
+    city_probs = defaultdict(list)
 
-    city_probs = defaultdict(float)
+    for i in range(1, max_s + 1):
+        n = sum(stack[i].values())
+        if n <= infection_rate:
+            for city_name in stack[i]:
+                city_probs[city_name].append(1.0)
+        elif infection_rate > 0:
+            for city_name in stack[i]:
+                city_probs[city_name].extend(
+                    (i, hg_pmf(j, n, stack[i][city_name], infection_rate))
+                    for j in range(1, stack[i][city_name] + 1)
+                )
 
-    for i in range(1, 7):
-        n = float(len(stack_d[i]))
-        for city in stack_d[i]:
-            city_probs[city] = min(1.0, infection_rate / n)
+            infection_rate -= n
+        else:
+            for city_name in stack[i]:
+                city_probs[city_name].append((i, 0.0))
 
-        infection_rate -= n
-        if infection_rate <= 0:
-            break
+    for i in (-1, 0):
+        for city_name in stack[i]:
+            city_probs[city_name].append((i, 0.0))
 
-    max_i = max(i for i in stack_d if stack_d[i])
     epi_probs = defaultdict(
-        float, {city_name: 1.0 / len(stack_d[max_i]) for city_name in stack_d[max_i]}
+        float,
+        {
+            city_name: stack[max_s][city_name] / sum(stack[max_s].values())
+            for city_name in stack[max_s]
+        },
     )
+
+    r_stack = defaultdict(list)
+    for i in sorted(stack):
+        for city_name in stack[i]:
+            r_stack[city_name].extend((i,) * stack[i][city_name])
 
     city_data = [
         dict(
             name=city_name,
             color=city_color,
-            discard=(stack[city_name] < 1),
-            stack=stack[city_name],
+            stack=r_stack[city_name],
             inf_risk=city_probs[city_name],
             epi_risk=epi_probs[city_name],
         )
@@ -161,6 +228,7 @@ def get_game_state(game, draw_phase=True):
         "epi_risk": epidemic_risk,
         "epidemics": epidemics,
         "city_data": city_data,
+        "cards_per_city": c.CARDS_PER_CITY,
     }
 
 
@@ -170,7 +238,6 @@ def begin():
 
     if form.validate_on_submit():
         game = Game(
-            month=form.month.data,
             funding_rate=form.funding_rate.data,
             extra_cards=form.extra_cards.data,
             turn_num=-1,
@@ -215,9 +282,7 @@ def draw(game_id=None):
 
     turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
     if turn is None:
-        turn = Turn(
-            game_id=game.id, turn_num=game.turn_num, resilient_pop=None
-        )
+        turn = Turn(game_id=game.id, turn_num=game.turn_num, resilient_pop=None)
         db.session.add(turn)
     else:
         # this could break the game state otherwise

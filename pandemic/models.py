@@ -26,15 +26,14 @@ class PlayerSession(db.Model):
 class Game(db.Model):
     __tablename__ = "games"
     id = db.Column(db.Integer, primary_key=True)
-    month = db.Column(db.String(16), nullable=False)  # month of the game
     funding_rate = db.Column(db.Integer, nullable=False)  # funding rate
     extra_cards = db.Column(db.Integer, nullable=False)  # bonus cards
     turn_num = db.Column(db.Integer, nullable=False)  # the current turn
     turns = db.relationship("Turn", backref="game", lazy="subquery")
 
     def __repr__(self):
-        return "<Game {}, Month {}, Turn {}, FR {}>".format(
-            self.id, self.month, self.turn_num, self.funding_rate
+        return "<Game {}, Turn {}, FR {}>".format(
+            self.id, self.turn_num, self.funding_rate
         )
 
 

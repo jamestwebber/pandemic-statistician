@@ -62,9 +62,6 @@ tr.gs-header {
   text-align: center;
 }
 
-div.game-state tr.discard {
-  opacity: 0.4;
-}
 
 /* forms and buttons */
 
@@ -86,12 +83,6 @@ div.btn.active {
   opacity: 0.4;
 }
 
-div.month {
-  background: #02A650;
-  color: #FFFFFF;
-}
-
-
 
 /* player drag-n-drop stuff */
 
@@ -100,7 +91,7 @@ div.month {
 }
 
 ol.js-player-grid {
-  border: 0px;
+  border: 0;
   box-shadow: none;
 }
 

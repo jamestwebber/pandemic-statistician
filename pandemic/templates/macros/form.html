@@ -8,7 +8,6 @@
   {{ form.hidden_tag() }}
   {{ wtf.form_errors(form, hiddens='only') }}
 
-  {{ wtf.form_field(form.month) }}
   <div class="form-group {% if form.players.errors %} has-error{% endif -%}">
     {{ form.players.label(class="control-label")|safe }}
     {{ form.players(class="form-control", **kwargs)|safe }}

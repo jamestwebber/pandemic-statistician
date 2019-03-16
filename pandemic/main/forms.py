@@ -37,13 +37,6 @@ class PlayerField(Form):
 
 
 class BeginForm(FlaskForm):
-    month = SelectField(
-        "Current Month",
-        choices=list(zip(c.MONTHS, c.MONTHS)),
-        validators=[InputRequired()],
-        widget=wdg.select_month,
-        description="The month for this game",
-    )
     players = FieldList(
         FormField(PlayerField, widget=wdg.player_widget, label="Player name"),
         label="",
@@ -59,7 +52,7 @@ class BeginForm(FlaskForm):
     )
     extra_cards = IntegerField(
         "Bonus Cards",
-        default=0,
+        default=8,
         validators=[InputRequired(), NumberRange(0)],
         description="Number of other cards (e.g. production cards) in the deck",
     )
@@ -93,11 +86,11 @@ class DrawForm(FlaskForm):
             del self.second_epidemic
             del self.resilient_population
         else:
-            max_stack = max(city["stack"] for city in game_state["city_data"])
+            max_stack = max(max(city["stack"]) for city in game_state["city_data"])
             epidemic_cities = [("", "")] + [
                 (city["name"], city["name"])
                 for city in game_state["city_data"]
-                if city["stack"] == max_stack
+                if max_stack in city["stack"]
             ]
             self.epidemic.choices = epidemic_cities
 
@@ -110,8 +103,7 @@ class DrawForm(FlaskForm):
                 (ch.character.name, ("Yes", ch.color_index)) for ch in characters
             ]
 
-    @staticmethod
-    def validate_resilient_population(field):
+    def validate_resilient_population(self, field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize Resilient Population")
@@ -137,6 +129,7 @@ class SetupInfectForm(FlaskForm):
         self.epidemics = -1
         self.cities.choices = [
             (city["name"], city["name"]) for city in game_state["city_data"]
+            for i in range(c.CARDS_PER_CITY)
         ]
 
     def validate_cities(self, field):
@@ -170,7 +163,7 @@ class InfectForm(SetupInfectForm):
             choices.extend(
                 (city["name"], city["name"])
                 for city in game_state["city_data"]
-                if city["stack"] == i
+                for j in range(city["stack"].count(i))
             )
 
             if len(choices) >= c.INFECTION_RATES[self.epidemics]:
@@ -189,8 +182,7 @@ class InfectForm(SetupInfectForm):
         else:
             super(InfectForm, self).validate_cities(field)
 
-    @staticmethod
-    def validate_skip_infection(field):
+    def validate_skip_infection(self, field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize this decision")
@@ -210,7 +202,7 @@ class ResilientPopForm(FlaskForm):
         self.resilient_city.choices = [
             (city["name"], city["name"])
             for city in game_state["city_data"]
-            if city["stack"] == 0
+            if 0 in city["stack"]
         ]
 
 
@@ -230,8 +222,7 @@ class ReplayForm(FlaskForm):
         ]
         self.game.data = game_id
 
-    @staticmethod
-    def validate_authorize(field):
+    def validate_authorize(self, field):
         if 0 < len(field.data) < c.NUM_PLAYERS:
             field.data = []
             raise ValidationError("All players must authorize this decision")

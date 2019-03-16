@@ -32,25 +32,17 @@ CHARACTERS = OrderedDict(
     ]
 )
 
-# months in the year
-MONTHS = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
-
 INFECTION_RATES = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
 
+INFECTION_GLYPHS = {
+    -1: "glyphicon glyphicon-remove-sign",
+    0: "glyphicon glyphicon-ok-sign",
+    1: "glyphicon glyphicon-exclamation-sign",
+    2: "glyphicon glyphicon-info-sign",
+}
+
+BASE_DECK_SIZE = 36
 EPIDEMICS = 5  # number of epidemics in the deck
 NUM_PLAYERS = 4  # four players, of course
 INITIAL_HAND_SIZE = {
