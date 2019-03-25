@@ -68,6 +68,13 @@ epidemics = db.Table(
     db.Column("turn_id", db.Integer, db.ForeignKey("turns.id"), primary_key=True),
 )
 
+forecasts = db.Table(
+    "forecast",
+    db.Column("city_id", db.Integer, db.ForeignKey("cities.id"), primary_key=True),
+    db.Column("turn_id", db.Integer, db.ForeignKey("turns.id"), primary_key=True),
+    db.Column("order", db.Integer, )
+)
+
 
 class City(db.Model):
     __tablename__ = "cities"
@@ -85,6 +92,10 @@ class City(db.Model):
     epidemics = db.relationship(
         "Turn", secondary=epidemics, lazy=True, backref="epidemic"
     )
+    # turns when this city was reordered by a forecast
+    forecasts = db.relationship(
+        "Turn", secondary=forecasts, lazy=True, backref="forecast"
+    )
 
     def __repr__(self):
         return self.name
@@ -96,7 +107,7 @@ class Turn(db.Model):
     turn_num = db.Column(db.Integer)  # which turn this is
     game_id = db.Column(db.Integer, db.ForeignKey("games.id"), nullable=False)
 
-    # turns when this city was exiled using resilient population (one-to-many)
+    # turns when a city was exiled using resilient population (one-to-many)
     res_pop_id = db.Column(db.Integer, db.ForeignKey("cities.id"), nullable=True)
     resilient_pop = db.relationship("City", lazy=True, backref="resilient_pops")
 

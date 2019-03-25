@@ -23,17 +23,39 @@ def character_list():
     return "".join(html)
 
 
-class PlayerListWidget(widgets.ListWidget):
+def city_list():
+    html = [
+        '<div class="row">',
+        '<label class="control-label" for="Cities">Cities</label>',
+        '<div class="js-grid">',
+    ]
+
+    html.extend(
+        '<div class="btn city-{} col-xs-3"> {}</div>'.format(
+            c.CITIES[city_name], city_name
+        )
+        for city_name in c.CITIES for i in range(c.CARDS_PER_CITY)
+    )
+    html.append("</div></div>")
+
+    return "".join(html)
+
+
+class DivListWidget(widgets.ListWidget):
     """
     Renders a list of fields as a list of Bootstrap `div class="row"` elements.
     """
+    def __init__(self, item_html):
+        super(DivListWidget, self).__init__()
+        self.item_html = item_html
 
     def __call__(self, field, **kwargs):
         kwargs.setdefault("id", field.id)
-        kwargs["class"] += " js-player-grid"
-        html = [character_list(), "<ol %s>" % (widgets.html_params(**kwargs))]
+        kwargs["class"] += " js-item-grid"
+        html = [self.item_html, "<ol %s>" % (widgets.html_params(**kwargs))]
         for subfield in field:
-            subfield.color_index.data = int(subfield.id.split("-")[-1])
+            if hasattr(subfield, "color_index"):
+                subfield.color_index.data = int(subfield.id.split("-")[-1])
             html.extend(('<li class="row form-control">', subfield(), "</li>"))
         html.append("</ol>")
         return widgets.HTMLString("".join(html))
@@ -64,11 +86,36 @@ def player_widget(field, **kwargs):
         field.turn_num(),
         field.character(),
         field.color_index(),
-        '</div><div class="col-xs-2 js-grid-target {}"></div>'.format(field.id),
+        '</div><div class="col-xs-4 js-grid-target {}"></div>'.format(field.id),
     ]
 
     if errors["character"]:
-        html.append('<div class="col-xs-3">{}</div>'.format(errors["character"]))
+        html.append('<div class="col-xs-4">{}</div>'.format(errors["character"]))
+
+    return widgets.HTMLString("".join(html))
+
+
+def forecast_widget(field, **kwargs):
+    field_id = kwargs.pop("id", field.id)
+
+    errors = {"city_name": ""}
+    if field.errors:
+        if "city_name" in field.errors:
+            errors["city_name"] = "".join(
+                '<p class="help-block">{}</p>'.format(error)
+                for error in field.errors["city_name"]
+            )
+
+    html = [
+        "<div {}>".format(widgets.html_params(id=field_id, class_="col-xs-2")),
+        '<label for="{}">{}</label> '.format(field_id, field.label),
+        field.city_name(),
+        field.stack_order(),
+        '</div><div class="col-xs-6 js-grid-target {}"></div>'.format(field.id),
+    ]
+
+    if errors["city_name"]:
+        html.append('<div class="col-xs-4">{}</div>'.format(errors["city_name"]))
 
     return widgets.HTMLString("".join(html))
 

@@ -36,11 +36,16 @@ class PlayerField(Form):
     color_index = HiddenField("oolor", validators=[InputRequired()])
 
 
+class CityForecastField(Form):
+    stack_order = HiddenField("order", validators=[InputRequired()])
+    city_name = HiddenField("city", validators=[InputRequired(), AnyOf(c.CITIES)])
+
+
 class BeginForm(FlaskForm):
     players = FieldList(
         FormField(PlayerField, widget=wdg.player_widget, label="Player name"),
         label="",
-        widget=wdg.PlayerListWidget(),
+        widget=wdg.DivListWidget(wdg.character_list()),
         min_entries=c.NUM_PLAYERS,
         max_entries=c.NUM_PLAYERS,
     )
@@ -71,6 +76,11 @@ class DrawForm(FlaskForm):
         widget=wdg.authorization,
         description="Authorize Resilient Population",
     )
+    city_forecast = SelectMultipleField(
+        "City Forecast",
+        widget=wdg.authorization,
+        description="Authorize City Forecast",
+    )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
 
@@ -85,6 +95,7 @@ class DrawForm(FlaskForm):
             del self.epidemic
             del self.second_epidemic
             del self.resilient_population
+            del self.city_forecast
         else:
             max_stack = max(max(city["stack"]) for city in game_state["city_data"])
             epidemic_cities = [("", "")] + [
@@ -100,6 +111,9 @@ class DrawForm(FlaskForm):
                 del self.second_epidemic
 
             self.resilient_population.choices = [
+                (ch.character.name, ("Yes", ch.color_index)) for ch in characters
+            ]
+            self.city_forecast.choices = [
                 (ch.character.name, ("Yes", ch.color_index)) for ch in characters
             ]
 
@@ -204,6 +218,23 @@ class ResilientPopForm(FlaskForm):
             for city in game_state["city_data"]
             if 0 in city["stack"]
         ]
+
+
+class ForecastForm(FlaskForm):
+    forecast_cities = FieldList(
+        FormField(CityForecastField, widget=wdg.forecast_widget, label="City"),
+        label="",
+        widget=wdg.DivListWidget(wdg.city_list()),
+        min_entries=8,
+        max_entries=8,
+    )
+    submit = SubmitField("Submit")
+    game = HiddenField("game_id", validators=[InputRequired()])
+
+    def __init__(self, game_state, *args, **kwargs):
+        super(ForecastForm, self).__init__(*args, **kwargs)
+
+        self.game.data = game_state["game_id"]
 
 
 class ReplayForm(FlaskForm):

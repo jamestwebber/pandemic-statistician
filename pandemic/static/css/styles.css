@@ -90,23 +90,28 @@ div.btn.active {
   border: 1px solid #ccc
 }
 
-ol.js-player-grid {
+ol.js-item-grid {
   border: 0;
   box-shadow: none;
+  width: 80%;
 }
 
-ol.js-player-grid > li {
+ol.js-item-grid > li {
   margin-bottom: 4px;
   display: list-item;
 }
 
-ol.js-player-grid > li:before {
+ol.js-item-grid > li:before {
   display: inline-block;
   vertical-align: middle;
 }
 
-ol.js-player-grid > li > div {
+ol.js-item-grid > li > div {
   display: inline-block;
+}
+
+ol.js-item-grid > li > div > div.btn {
+  width: 100%;
 }
 
 

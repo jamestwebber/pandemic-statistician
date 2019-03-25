@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% import "macros/form.html" as form_macro %}
 
-{% block title %}Game Setup{% endblock %}
+{% block title %}City Forecast{% endblock %}
 
 {% block content %}
   {{ super() }}
   <div class="container-fluid">
-    {{ form_macro.begin_form(form) }}
+    {{ form_macro.forecast_form(form) }}
   </div>
 {% endblock %}
 
@@ -35,16 +35,16 @@
     placeholderClass: 'li border'
   });
 
-  let update_characters = function() {
+  let update_forecast = function() {
     $('ol.js-item-grid li').each(
       function(index) {
-        $(this).find('input[type="hidden"][name$="turn_num"]').attr("value", index);
-        $(this).find('input[type="hidden"][name$="character"]')
+        $(this).find('input[type="hidden"][name$="stack_order"]').attr("value", index);
+        $(this).find('input[type="hidden"][name$="city_name"]')
           .attr("value", $(this).find('div.js-grid-target > div.btn:only-child').text().trim());
       });
   };
 
-  $('#submit')[0].addEventListener('mousedown', update_characters);
+  $('#submit')[0].addEventListener('mousedown', update_forecast);
 
   </script>
 {% endblock %}
