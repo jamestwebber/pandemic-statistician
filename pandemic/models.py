@@ -18,7 +18,7 @@ class PlayerSession(db.Model):
     character = db.relationship("Character", backref="games", lazy=True)
 
     def __repr__(self):
-        return "<Game {} - {} - {}".format(
+        return "<Game {} - {} - {}>".format(
             self.game_id, self.player_name, self.character.name
         )
 
@@ -68,12 +68,21 @@ epidemics = db.Table(
     db.Column("turn_id", db.Integer, db.ForeignKey("turns.id"), primary_key=True),
 )
 
-forecasts = db.Table(
-    "forecast",
-    db.Column("city_id", db.Integer, db.ForeignKey("cities.id"), primary_key=True),
-    db.Column("turn_id", db.Integer, db.ForeignKey("turns.id"), primary_key=True),
-    db.Column("order", db.Integer, )
-)
+
+class CityForecast(db.Model):
+    __tablename__ = 'forecasts'
+    turn_id = db.Column(db.Integer, db.ForeignKey('turns.id'), primary_key=True)
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey("games.id"), primary_key=True)
+    stack_order = db.Column(db.Integer, primary_key=True)
+
+    city = db.relationship("City", backref="forecasts", lazy=True)
+    turn = db.relationship("Turn", backref="forecasts", lazy=True)
+
+    def __repr__(self):
+        return "<{} forecast to #{} in Game {}>".format(
+            self.city.name, self.stack_order, self.game_id
+        )
 
 
 class City(db.Model):
@@ -91,10 +100,6 @@ class City(db.Model):
     # turns when this city was drawn as an epidemic
     epidemics = db.relationship(
         "Turn", secondary=epidemics, lazy=True, backref="epidemic"
-    )
-    # turns when this city was reordered by a forecast
-    forecasts = db.relationship(
-        "Turn", secondary=forecasts, lazy=True, backref="forecast"
     )
 
     def __repr__(self):

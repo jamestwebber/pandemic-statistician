@@ -18,10 +18,15 @@
       <table class="table city-table">
         <thead>
           <tr class="gs-header">
-            <td></td>
-            <td>City</td>
-            <td colspan="{{ game_state['cards_per_city'] }}">Infection Risk</td>
-            <td>Epidemic</td>
+            <th rowspan="2">hidden</th>
+            <th rowspan="2">City</th>
+            <th colspan="{{ game_state['cards_per_city'] }}">Infection Risk</th>
+            <th rowspan="2">Epidemic</th>
+          </tr>
+          <tr class="gs-header">
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
           </tr>
         </thead>
         <tbody>
@@ -30,9 +35,9 @@
             <td>{{ city['color'] | color_i }}</td>
             <td class="city-{{ city['color'] }}">{{ city['name'] }}</td>
             {%- for stack, inf_risk in city['inf_risk'] %}
-              <td class="{{ inf_risk | danger_level }}"><span class="{{ stack | to_glyph }}"></span>  {{ inf_risk | to_percent }}</td>
+              <td class="infection-risk {{ inf_risk | danger_level }}"><span class="{{ stack | to_glyph }}"></span>  {{ inf_risk | to_percent }}</td>
             {%- endfor %}
-            <td class="{{ city['epi_risk'] | danger_level }}">{{ city['epi_risk'] | to_percent }}</td>
+            <td class="epidemic-risk {{ city['epi_risk'] | danger_level }}">{{ city['epi_risk'] | to_percent }}</td>
           </tr>
         {%- endfor %}
         </tbody>
@@ -43,8 +48,8 @@
 
 
 {% macro game_state_scripts() %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/dataTables.bootstrap.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+  <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 
   <script>
     $(document).ready(function() {

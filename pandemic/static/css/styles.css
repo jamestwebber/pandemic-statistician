@@ -58,10 +58,17 @@ div.game-state {
   text-align: right;
 }
 
-tr.gs-header {
+tr.gs-header > th {
   text-align: center;
 }
 
+td.infection-risk {
+  width: 15%;
+}
+
+td.epidemic-risk {
+  width: 20%;
+}
 
 /* forms and buttons */
 
@@ -108,6 +115,11 @@ ol.js-item-grid > li:before {
 
 ol.js-item-grid > li > div {
   display: inline-block;
+}
+
+ol.js-item-grid > li > div.js-grid-target {
+  min-height: 51px;
+
 }
 
 ol.js-item-grid > li > div > div.btn {

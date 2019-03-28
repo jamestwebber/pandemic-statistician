@@ -5,7 +5,7 @@ from flask import session, render_template, redirect, url_for, flash
 from . import get_game_state
 from .. import db
 from .. import constants as c
-from ..models import Game, City, Turn, PlayerSession, Character
+from ..models import Game, City, CityForecast, Turn, PlayerSession, Character
 
 from . import main, forms
 
@@ -161,9 +161,9 @@ def resilientpop():
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        this_turn.resilient_pop = City.query.filter_by(
-            name=form.resilient_city.data
-        ).first()
+        this_turn.resilient_pop = City.query.filter(
+            City.name.in_(form.resilient_cities.data)
+        ).all()
         db.session.commit()
 
         return redirect(url_for(".infect"))
@@ -205,11 +205,17 @@ def forecast():
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        city_names = form.forecast_cities.data
-
-        this_turn.forecast_cities = City.query.filter(
-            City.name.in_()
-        ).all()
+        for fc in form.forecast_cities.data:
+            city = City.query.filter_by(name=fc["city_name"]).first()
+            cf = CityForecast(
+                game_id=game.id,
+                city_id=city.id,
+                turn_id=this_turn.id,
+                turn=this_turn,
+                city=city,
+                stack_order=int(fc["stack_order"]) + 1,
+            )
+            this_turn.forecasts.append(cf)
 
         db.session.commit()
 

@@ -52,7 +52,7 @@ class DivListWidget(widgets.ListWidget):
     def __call__(self, field, **kwargs):
         kwargs.setdefault("id", field.id)
         kwargs["class"] += " js-item-grid"
-        html = [self.item_html, "<ol %s>" % (widgets.html_params(**kwargs))]
+        html = [self.item_html, f"<ol {widgets.html_params(**kwargs)}>"]
         for subfield in field:
             if hasattr(subfield, "color_index"):
                 subfield.color_index.data = int(subfield.id.split("-")[-1])
@@ -124,13 +124,14 @@ def select_cities(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
     html = [
-        "<div %s>"
-        % widgets.html_params(
-            id=field_id, class_="btn-group row", data_toggle="buttons"
+        "<div {}>".format(
+            widgets.html_params(
+                id=field_id, class_="btn-group row", data_toggle="buttons"
+            )
         )
     ]
     for value, label, checked in field.iter_choices():
-        choice_id = "%s-%s" % (field_id, value)
+        choice_id = f"{field_id}-{value}"
         options = dict(
             kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"
         )
@@ -150,13 +151,13 @@ def authorization(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
     html = [
-        "<div %s>"
-        % widgets.html_params(
+        "<div {}>"
+            .format(widgets.html_params(
             id=field_id, class_="btn-group col-sm-12", data_toggle="buttons"
-        )
+        ))
     ]
     for value, (label, ci), checked in field.iter_choices():
-        choice_id = "%s-%s" % (field_id, value)
+        choice_id = f"{field_id}-{value}"
         options = dict(
             kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"
         )
