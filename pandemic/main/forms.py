@@ -30,7 +30,6 @@ def order_fields(fields, order):
 
 
 class PlayerField(Form):
-    player_name = StringField("Name", validators=[InputRequired()])
     turn_num = HiddenField("num", validators=[InputRequired()])
     character = HiddenField("char", validators=[InputRequired(), AnyOf(c.CHARACTERS)])
     color_index = HiddenField("oolor", validators=[InputRequired()])
@@ -43,7 +42,7 @@ class CityForecastField(Form):
 
 class BeginForm(FlaskForm):
     players = FieldList(
-        FormField(PlayerField, widget=wdg.player_widget, label="Player name"),
+        FormField(PlayerField, widget=wdg.player_widget, label="Player"),
         label="",
         widget=wdg.DivListWidget(wdg.character_list()),
         min_entries=c.NUM_PLAYERS,
@@ -77,9 +76,7 @@ class DrawForm(FlaskForm):
         description="Authorize Resilient Population",
     )
     city_forecast = SelectMultipleField(
-        "City Forecast",
-        widget=wdg.authorization,
-        description="Authorize City Forecast",
+        "City Forecast", widget=wdg.authorization, description="Authorize City Forecast"
     )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
@@ -108,8 +105,7 @@ class DrawForm(FlaskForm):
         else:
             max_stack = max(game_state["stack"])
             epidemic_cities = [("", "")] + [
-                (city_name, city_name)
-                for city_name in game_state["stack"][max_stack]
+                (city_name, city_name) for city_name in game_state["stack"][max_stack]
             ]
             self.epidemic.choices = epidemic_cities
 
@@ -148,8 +144,9 @@ class SetupInfectForm(FlaskForm):
         self.game.data = game_state["game_id"]
         self.epidemics = -1
         self.cities.choices = [
-            (city_name, city_name) for city_name in c.CITIES
-            for i in range(c.CARDS_PER_CITY)
+            (city_name, city_name)
+            for city_name in game_state["stack"][1]
+            for j in range(game_state["stack"][1][city_name])
         ]
 
     def validate_cities(self, field):
@@ -221,7 +218,7 @@ class ResilientPopForm(FlaskForm):
         super(ResilientPopForm, self).__init__(*args, **kwargs)
 
         self.game.data = game_state["game_id"]
-        self.resilient_city.choices = [
+        self.resilient_cities.choices = [
             (city_name, city_name)
             for city_name in game_state["stack"][0]
             for i in range(game_state["stack"][0][city_name])
@@ -240,7 +237,6 @@ class ForecastForm(FlaskForm):
     forecast_cities = FieldList(
         FormField(CityForecastField, widget=wdg.forecast_widget, label="City"),
         label="",
-        widget=wdg.DivListWidget(wdg.city_list()),
         min_entries=8,
         max_entries=8,
     )
@@ -249,6 +245,18 @@ class ForecastForm(FlaskForm):
 
     def __init__(self, game_state, *args, **kwargs):
         super(ForecastForm, self).__init__(*args, **kwargs)
+
+        cities = []
+        for i in range(1, max(game_state["stack"]) + 1):
+            cities.extend(
+                city_name
+                for city_name in game_state["stack"][i]
+                for j in range(game_state["stack"][i][city_name])
+            )
+            if len(cities) >= 8:
+                break
+
+        self.forecast_cities.widget = wdg.DivListWidget(wdg.city_list(cities))
 
         self.game.data = game_state["game_id"]
 

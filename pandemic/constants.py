@@ -36,10 +36,10 @@ INFECTION_RATES = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
 
 INFECTION_GLYPHS = {
-    -1: "glyphicon glyphicon-remove-sign",
-    0: "glyphicon glyphicon-ok-sign",
+    -1: "glyphicon glyphicon-ban-circle",
+    0: "glyphicon glyphicon-remove",
     1: "glyphicon glyphicon-exclamation-sign",
-    2: "glyphicon glyphicon-info-sign",
+    2: "glyphicon glyphicon-minus",
 }
 
 BASE_DECK_SIZE = 36

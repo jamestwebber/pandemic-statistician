@@ -63,15 +63,15 @@ tr.gs-header > th {
 }
 
 td.infection-risk {
-  width: 15%;
+  width: 20%;
 }
 
 td.epidemic-risk {
   width: 20%;
 }
 
-/* forms and buttons */
 
+/* forms and buttons */
 
 .form-control {
   height: auto;
@@ -100,7 +100,7 @@ div.btn.active {
 ol.js-item-grid {
   border: 0;
   box-shadow: none;
-  width: 80%;
+  width: 40%;
 }
 
 ol.js-item-grid > li {

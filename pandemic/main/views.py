@@ -1,11 +1,21 @@
 import fractions
 
+from collections import Counter
+
 from flask import session, render_template, redirect, url_for, flash
 
 from . import get_game_state
 from .. import db
 from .. import constants as c
-from ..models import Game, City, CityForecast, Turn, PlayerSession, Character
+from ..models import (
+    Game,
+    City,
+    CityForecast,
+    CityInfection,
+    Turn,
+    PlayerSession,
+    Character,
+)
 
 from . import main, forms
 
@@ -17,7 +27,7 @@ def to_percent(v):
             v * 100.0, fractions.Fraction.from_float(v).limit_denominator()
         )
         if v > 0
-        else "-"
+        else ""
     )
 
 
@@ -58,7 +68,6 @@ def begin():
         for player_data in form.players.data:
             player_char = Character.query.filter_by(name=player_data["character"]).one()
             player = PlayerSession(
-                player_name=player_data["player_name"],
                 turn_num=int(player_data["turn_num"]),
                 color_index=int(player_data["color_index"]),
                 game_id=game.id,
@@ -96,7 +105,10 @@ def draw(game_id=None):
     else:
         # this could break the game state otherwise
         turn.epidemic = []
-        turn.infections = []
+        for ci in turn.infections:
+            db.session.delete(ci)
+        turn.resilient_pop = None
+        turn.res_pop_count = None
 
     db.session.commit()
 
@@ -118,7 +130,13 @@ def draw(game_id=None):
             form.resilient_population
             and len(form.resilient_population.data) == c.NUM_PLAYERS
         ):
-            return redirect(url_for(".resilientpop"))
+            if (
+                form.city_forecast
+                and len(form.city_forecast.data) == c.NUM_PLAYERS
+            ):
+                return redirect(url_for(".resilientpop", forecast=1))
+            else:
+                return redirect(url_for(".resilientpop"))
         elif (
             form.city_forecast
             and len(form.city_forecast.data) == c.NUM_PLAYERS
@@ -133,7 +151,8 @@ def draw(game_id=None):
 
 
 @main.route("/resilientpop", methods=("GET", "POST"))
-def resilientpop():
+@main.route("/resilientpop/<int:forecast>", methods=("GET", "POST"))
+def resilientpop(forecast=0):
     if session.get("game_id", None) is None:
         flash("No game in progress", "error")
         return redirect(url_for(".begin"))
@@ -161,12 +180,19 @@ def resilientpop():
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
+        print(form.resilient_cities.data)
+
         this_turn.resilient_pop = City.query.filter(
             City.name.in_(form.resilient_cities.data)
-        ).all()
+        ).first()
+        this_turn.res_pop_count = len(form.resilient_cities.data)
         db.session.commit()
 
-        return redirect(url_for(".infect"))
+        if forecast:
+            return redirect(url_for(".forecast"))
+        else:
+            return redirect(url_for(".infect"))
+
 
     return render_template(
         "base_form.html",
@@ -196,7 +222,7 @@ def forecast():
         flash("Need to draw cards first", "error")
         return redirect(url_for(".draw"))
 
-    game_state = get_game_state(game)
+    game_state = get_game_state(game, draw_phase=False)
 
     form = forms.ForecastForm(game_state)
 
@@ -208,7 +234,6 @@ def forecast():
         for fc in form.forecast_cities.data:
             city = City.query.filter_by(name=fc["city_name"]).first()
             cf = CityForecast(
-                game_id=game.id,
                 city_id=city.id,
                 turn_id=this_turn.id,
                 turn=this_turn,
@@ -222,10 +247,7 @@ def forecast():
         return redirect(url_for(".infect"))
 
     return render_template(
-        "forecast.html",
-        title="City Forecast",
-        game_state=game_state,
-        form=form,
+        "forecast.html", title="City Forecast", game_state=game_state, form=form
     )
 
 
@@ -264,10 +286,18 @@ def infect(game_id=None):
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        if form.cities.data:
-            this_turn.infections = City.query.filter(
-                City.name.in_(form.cities.data)
-            ).all()
+        infected_cities = Counter(form.cities.data)
+
+        for city_name in infected_cities:
+            city = City.query.filter_by(name=city_name).first()
+            ci = CityInfection(
+                city_id=city.id,
+                turn_id=this_turn.id,
+                turn=this_turn,
+                city=city,
+                count=infected_cities[city_name],
+            )
+            this_turn.infections.append(ci)
 
         game.turn_num += 1
         db.session.commit()
@@ -311,6 +341,13 @@ def replay(game_id, turn_num):
         if len(form.authorize.data) == c.NUM_PLAYERS:
             session["game_id"] = game_id
             game.turn_num = turn_num
+
+            turns = Turn.query.filter_by(game_id=game.id).filter(Turn.turn_num > turn_num).all()
+            for turn in turns:
+                for ci in turn.infections:
+                    db.session.delete(ci)
+                db.session.delete(turn)
+
             db.session.commit()
 
             return redirect(url_for(".draw"))

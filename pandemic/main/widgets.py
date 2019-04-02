@@ -12,7 +12,7 @@ def character_list():
 
     html.extend(
         (
-            '<div class="btn col-xs-3">'
+            '<div class="btn col-xs-3 btn-option">'
             '<span class="glyphicon {}" aria-hidden="true"></span>'
             " {}</div>"
         ).format(c.CHARACTERS[char].icon, char)
@@ -23,7 +23,7 @@ def character_list():
     return "".join(html)
 
 
-def city_list():
+def city_list(cities):
     html = [
         '<div class="row">',
         '<label class="control-label" for="Cities">Cities</label>',
@@ -31,10 +31,8 @@ def city_list():
     ]
 
     html.extend(
-        '<div class="btn city-{} col-xs-3"> {}</div>'.format(
-            c.CITIES[city_name], city_name
-        )
-        for city_name in c.CITIES for i in range(c.CARDS_PER_CITY)
+        f'<div class="btn city-{c.CITIES[city_name]} col-xs-3"> {city_name}</div>'
+        for city_name in cities
     )
     html.append("</div></div>")
 
@@ -45,6 +43,7 @@ class DivListWidget(widgets.ListWidget):
     """
     Renders a list of fields as a list of Bootstrap `div class="row"` elements.
     """
+
     def __init__(self, item_html):
         super(DivListWidget, self).__init__()
         self.item_html = item_html
@@ -64,14 +63,9 @@ class DivListWidget(widgets.ListWidget):
 def player_widget(field, **kwargs):
     field_id = kwargs.pop("id", field.id)
 
-    errors = {"player_name": "", "character": ""}
+    errors = {"character": ""}
 
     if field.errors:
-        if "player_name" in field.errors:
-            errors["player_name"] = "".join(
-                '<p class="help-block">{}</p>'.format(error)
-                for error in field.errors["player_name"]
-            )
         if "character" in field.errors:
             errors["character"] = "".join(
                 '<p class="help-block">{}</p>'.format(error)
@@ -79,14 +73,11 @@ def player_widget(field, **kwargs):
             )
 
     html = [
-        "<div {}>".format(widgets.html_params(id=field_id, class_="col-xs-3")),
-        '<label for="{}">{}</label> '.format(field_id, field.label),
-        field.player_name(),
-        errors["player_name"],
+        "<div {}>".format(widgets.html_params(id=field_id, class_="col-xs-2")),
         field.turn_num(),
         field.character(),
         field.color_index(),
-        '</div><div class="col-xs-4 js-grid-target {}"></div>'.format(field.id),
+        '</div><div class="col-xs-8 js-grid-target {}"></div>'.format(field.id),
     ]
 
     if errors["character"]:
@@ -111,7 +102,7 @@ def forecast_widget(field, **kwargs):
         '<label for="{}">{}</label> '.format(field_id, field.label),
         field.city_name(),
         field.stack_order(),
-        '</div><div class="col-xs-6 js-grid-target {}"></div>'.format(field.id),
+        '</div><div class="col-xs-8 js-grid-target {}"></div>'.format(field.id),
     ]
 
     if errors["city_name"]:
@@ -126,7 +117,7 @@ def select_cities(field, **kwargs):
     html = [
         "<div {}>".format(
             widgets.html_params(
-                id=field_id, class_="btn-group row", data_toggle="buttons"
+                id=field_id, class_="row", data_toggle="buttons"
             )
         )
     ]
@@ -151,10 +142,11 @@ def authorization(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
     html = [
-        "<div {}>"
-            .format(widgets.html_params(
-            id=field_id, class_="btn-group col-sm-12", data_toggle="buttons"
-        ))
+        "<div {}>".format(
+            widgets.html_params(
+                id=field_id, class_="row", data_toggle="buttons"
+            )
+        )
     ]
     for value, (label, ci), checked in field.iter_choices():
         choice_id = f"{field_id}-{value}"

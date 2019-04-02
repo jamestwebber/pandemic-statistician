@@ -3,13 +3,32 @@ import math
 import operator as op
 from collections import defaultdict, Counter
 
-from flask import Blueprint, flash
+from flask import Blueprint, flash, current_app
 
 from pandemic import constants as c
 from pandemic.models import Turn
 
 
 main = Blueprint("main", __name__)
+
+
+def print_stack(stack):
+    for i in sorted(stack):
+        print(
+            "stack {}:\n\t{}".format(
+                i, "\n\t".join(f"{c} ({stack[i][c]})" for c in stack[i])
+            ),
+            end="\n\n",
+        )
+
+
+def clean_stack(stack):
+    stack = defaultdict(
+        Counter,
+        {i: Counter(stack[i].elements()) for i in stack if sum(stack[i].values()) > 0},
+    )
+
+    return stack, max(stack)
 
 
 def resolve_epidemic(stack, epidemic_city, max_stack, inc_stack):
@@ -23,6 +42,8 @@ def resolve_epidemic(stack, epidemic_city, max_stack, inc_stack):
         for s in range(max_stack, -1, -1):
             stack[s + 1] = stack[s]
         stack[0] = Counter()
+
+    return clean_stack(stack)
 
 
 def ncr(n, r):
@@ -69,26 +90,46 @@ def get_game_state(game, draw_phase=True):
         stack[1][city_name] = c.CARDS_PER_CITY
 
     epidemics = 0
+
+    if current_app.debug:
+        print(f"----- TURN {len(turns) - 1} ---------", end="\n\n")
+
     for i, turn in enumerate(turns):
-        max_s = max(s for s in stack if sum(stack[s].values()) > 0)
+        stack, max_s = clean_stack(stack)
+        if current_app.debug:
+            print(f"on turn {turn.turn_num}:")
+            print_stack(stack)
+
         inc_stack = i < len(turns) - 1 or (not draw_phase)
 
+        if turn.resilient_pop:
+            if current_app.debug:
+                print(
+                    f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})"
+                )
+            stack[0][turn.resilient_pop.name] -= turn.res_pop_count
+            stack[-1][turn.resilient_pop.name] += turn.res_pop_count
+
+            stack, max_s = clean_stack(stack)
+
         if turn.epidemic:
+            if current_app.debug:
+                print(f"epidemic: {', '.join(city.name for city in turn.epidemic)}")
             epidemics += 1
-            resolve_epidemic(stack, turn.epidemic[0].name, max_s, inc_stack)
+            stack, max_s = resolve_epidemic(
+                stack, turn.epidemic[0].name, max_s, inc_stack
+            )
 
             if len(turn.epidemic) == 2:
                 epidemics += 1
-                resolve_epidemic(stack, turn.epidemic[1].name, max_s, inc_stack)
+                stack, max_s = resolve_epidemic(
+                    stack, turn.epidemic[1].name, max_s, inc_stack
+                )
 
-        if turn.resilient_pop:
-            for city in turn.resilient_pop:
-                stack[0][city.name] -= 1
-                stack[-1][city.name] += 1
-
-        print(stack)
-        print()
         if turn.forecasts:
+            if current_app.debug:
+                print("forecast")
+
             new_stack = defaultdict(Counter, {0: stack[0], -1: stack[-1]})
             for cf in turn.forecasts:
                 new_stack[cf.stack_order][cf.city.name] += 1
@@ -99,31 +140,42 @@ def get_game_state(game, draw_phase=True):
                 new_stack[j + 8] = stack[j]
 
             stack = new_stack
-        print(stack)
+            if current_app.debug:
+                print_stack(stack)
 
-        infected_cities = sorted(
-            turn.infections,
-            key=lambda city: min(j for j in stack if stack[j][city.name] > 0),
-        )
+        stack, max_s = clean_stack(stack)
 
-        for city in infected_cities:
-            if stack[1][city.name] < 1:
+        infected_cities = Counter({ci.city.name: ci.count for ci in turn.infections})
+
+        if current_app.debug:
+            print(
+                "infected:\n\t{}".format("\n\t".join(infected_cities.elements())),
+                end="\n\n",
+            )
+
+        while sum(infected_cities.values()):
+            # all of the infected cities currently in top group
+            possible_cities = infected_cities & stack[1]
+            print("possible:", possible_cities)
+            if not len(possible_cities):
                 flash(
                     "WARNING: looks like a city was infected too early, check records!"
                 )
-            else:
-                stack[1][city.name] -= 1
-                stack[0][city.name] += 1
+                break
+
+            for city_name in possible_cities.elements():
+                infected_cities[city_name] -= 1
+                stack[1][city_name] -= 1
+                stack[0][city_name] += 1
 
             if sum(stack[1].values()) == 0:
-                for s in range(2, max_s + 1):
-                    stack[s - 1] = stack[s]
+                for s in range(1, max_s):
+                    stack[s] = stack[s + 1].copy()
                 stack[max_s] = Counter()
 
-    stack = defaultdict(
-        Counter, {i: stack[i] for i in stack if sum(stack[i].values()) > 0}
-    )
-    max_s = max(stack)
+    stack, max_s = clean_stack(stack)
+
+    print_stack(stack)
 
     epidemic_stacks = Counter((i % c.EPIDEMICS) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())
@@ -160,7 +212,7 @@ def get_game_state(game, draw_phase=True):
         n = sum(stack[i].values())
         if n <= infection_rate:
             for city_name in stack[i]:
-                city_probs[city_name].append((i, 1.0))
+                city_probs[city_name].extend(((i, 1.0),) * stack[i][city_name])
             infection_rate -= n
         elif infection_rate > 0:
             for city_name in stack[i]:
@@ -179,7 +231,7 @@ def get_game_state(game, draw_phase=True):
         for city_name in stack[i]:
             for j in range(stack[i][city_name]):
                 city_probs[city_name].append((i, 0.0))
-
+    print(city_probs)
     epi_probs = defaultdict(
         float,
         {
@@ -209,6 +261,7 @@ def get_game_state(game, draw_phase=True):
         "stack": stack,
         "cards_per_city": c.CARDS_PER_CITY,
     }
+
 
 # down here to avoid circular imports
 from ..main import views

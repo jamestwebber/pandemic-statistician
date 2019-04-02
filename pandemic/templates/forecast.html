@@ -18,14 +18,14 @@
   sortable('.js-grid', {
     forcePlaceholderSize: true,
     placeholderClass: 'btn col-xs-3 border',
-    acceptFrom: '.js-grid-target',
+    acceptFrom: '.js-grid,.js-grid-target',
     items: ':not(.border)'
   });
 
   sortable('.js-grid-target', {
     forcePlaceholderSize: true,
     placeholderClass: 'btn col-xs-12 border',
-    acceptFrom: '.js-grid',
+    acceptFrom: '.js-grid,.js-grid-target',
     items: ':not(.border)',
     maxItems: 1
   });

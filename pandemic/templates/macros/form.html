@@ -8,7 +8,7 @@
   {{ form.hidden_tag() }}
   {{ wtf.form_errors(form, hiddens='only') }}
 
-  <div class="form-group {% if form.players.errors %} has-error{% endif -%}">
+  <div class="form-group row {% if form.players.errors %} has-error{% endif -%}">
     {{ form.players.label(class="control-label")|safe }}
     {{ form.players(class="form-control", **kwargs)|safe }}
     {%- if form.players.errors %}
@@ -36,7 +36,7 @@
   {{ form.hidden_tag() }}
   {{ wtf.form_errors(form, hiddens='only') }}
 
-  <div class="form-group {% if form.forecast_cities.errors %} has-error{% endif -%}">
+  <div class="form-group row {% if form.forecast_cities.errors %} has-error{% endif -%}">
     {{ form.forecast_cities.label(class="control-label")|safe }}
     {{ form.forecast_cities(class="form-control", **kwargs)|safe }}
     {%- if form.forecast_cities.errors %}
