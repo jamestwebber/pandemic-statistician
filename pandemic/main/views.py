@@ -33,9 +33,9 @@ def to_percent(v):
 
 @main.app_template_filter("danger_level")
 def danger_level(v):
-    if v > 0.66:
+    if v > 0.33:
         return "bg-danger"
-    elif v > 0.33:
+    elif v > 0.25:
         return "bg-warning"
     else:
         return ""
@@ -43,7 +43,7 @@ def danger_level(v):
 
 @main.app_template_filter("to_glyph")
 def to_glyph(v):
-    return c.INFECTION_GLYPHS.get(v, "glyphicon glyphicon-question-sign")
+    return c.infection_glyphs.get(v, "glyphicon glyphicon-question-sign")
 
 
 @main.app_template_filter("color_i")
@@ -128,19 +128,13 @@ def draw(game_id=None):
 
         if (
             form.resilient_population
-            and len(form.resilient_population.data) == c.NUM_PLAYERS
+            and len(form.resilient_population.data) == c.num_players
         ):
-            if (
-                form.city_forecast
-                and len(form.city_forecast.data) == c.NUM_PLAYERS
-            ):
+            if form.city_forecast and len(form.city_forecast.data) == c.num_players:
                 return redirect(url_for(".resilientpop", forecast=1))
             else:
                 return redirect(url_for(".resilientpop"))
-        elif (
-            form.city_forecast
-            and len(form.city_forecast.data) == c.NUM_PLAYERS
-        ):
+        elif form.city_forecast and len(form.city_forecast.data) == c.num_players:
             return redirect(url_for(".forecast"))
         else:
             return redirect(url_for(".infect"))
@@ -151,8 +145,8 @@ def draw(game_id=None):
 
 
 @main.route("/resilientpop", methods=("GET", "POST"))
-@main.route("/resilientpop/<int:forecast>", methods=("GET", "POST"))
-def resilientpop(forecast=0):
+@main.route("/resilientpop/<int:also_forecast>", methods=("GET", "POST"))
+def resilientpop(also_forecast=0):
     if session.get("game_id", None) is None:
         flash("No game in progress", "error")
         return redirect(url_for(".begin"))
@@ -188,11 +182,10 @@ def resilientpop(forecast=0):
         this_turn.res_pop_count = len(form.resilient_cities.data)
         db.session.commit()
 
-        if forecast:
+        if also_forecast:
             return redirect(url_for(".forecast"))
         else:
             return redirect(url_for(".infect"))
-
 
     return render_template(
         "base_form.html",
@@ -338,11 +331,15 @@ def replay(game_id, turn_num):
     form = forms.ReplayForm(game_id, game.characters)
 
     if form.validate_on_submit():
-        if len(form.authorize.data) == c.NUM_PLAYERS:
+        if len(form.authorize.data) == c.num_players:
             session["game_id"] = game_id
             game.turn_num = turn_num
 
-            turns = Turn.query.filter_by(game_id=game.id).filter(Turn.turn_num > turn_num).all()
+            turns = (
+                Turn.query.filter_by(game_id=game.id)
+                .filter(Turn.turn_num > turn_num)
+                .all()
+            )
             for turn in turns:
                 for ci in turn.infections:
                     db.session.delete(ci)

@@ -31,13 +31,17 @@ def order_fields(fields, order):
 
 class PlayerField(Form):
     turn_num = HiddenField("num", validators=[InputRequired()])
-    character = HiddenField("char", validators=[InputRequired(), AnyOf(c.CHARACTERS)])
+    character = HiddenField(
+        "char", validators=[InputRequired(), AnyOf([ch.name for ch in c.characters])]
+    )
     color_index = HiddenField("oolor", validators=[InputRequired()])
 
 
 class CityForecastField(Form):
     stack_order = HiddenField("order", validators=[InputRequired()])
-    city_name = HiddenField("city", validators=[InputRequired(), AnyOf(c.CITIES)])
+    city_name = HiddenField(
+        "city", validators=[InputRequired(), AnyOf([city.name for city in c.cities])]
+    )
 
 
 class BeginForm(FlaskForm):
@@ -45,18 +49,18 @@ class BeginForm(FlaskForm):
         FormField(PlayerField, widget=wdg.player_widget, label="Player"),
         label="",
         widget=wdg.DivListWidget(wdg.character_list()),
-        min_entries=c.NUM_PLAYERS,
-        max_entries=c.NUM_PLAYERS,
+        min_entries=c.num_players,
+        max_entries=c.num_players,
     )
     funding_rate = IntegerField(
-        "Funding Rate",
+        "Ration Level",
         default=0,
         validators=[InputRequired(), NumberRange(0, 10)],
-        description="How many R01s we have",
+        description="How many burritos we have",
     )
     extra_cards = IntegerField(
         "Bonus Cards",
-        default=8,
+        default=9,
         validators=[InputRequired(), NumberRange(0)],
         description="Number of other cards (e.g. production cards) in the deck",
     )
@@ -93,11 +97,9 @@ class DrawForm(FlaskForm):
             del self.city_forecast
         else:
             self.resilient_population.choices = [
-                (ch.character.name, ("Yes", ch.color_index)) for ch in characters
+                (ch.character.name, ch) for ch in characters
             ]
-            self.city_forecast.choices = [
-                (ch.character.name, ("Yes", ch.color_index)) for ch in characters
-            ]
+            self.city_forecast.choices = [(ch.character.name, ch) for ch in characters]
 
         if game_state["epi_risk"] == 0.0 or self.turn_num == -1:
             del self.epidemic
@@ -115,12 +117,12 @@ class DrawForm(FlaskForm):
                 del self.second_epidemic
 
     def validate_resilient_population(self, field):
-        if 0 < len(field.data) < c.NUM_PLAYERS:
+        if 0 < len(field.data) < c.num_players:
             field.data = []
             raise ValidationError("All players must authorize Resilient Population")
 
     def validate_city_forecast(self, field):
-        if 0 < len(field.data) < c.NUM_PLAYERS:
+        if 0 < len(field.data) < c.num_players:
             field.data = []
             raise ValidationError("All players must authorize City Forecast")
 
@@ -144,13 +146,13 @@ class SetupInfectForm(FlaskForm):
         self.game.data = game_state["game_id"]
         self.epidemics = -1
         self.cities.choices = [
-            (city_name, city_name)
+            (city_name, c.city_dict[city_name])
             for city_name in game_state["stack"][1]
             for j in range(game_state["stack"][1][city_name])
         ]
 
     def validate_cities(self, field):
-        if len(field.data) != c.INFECTION_RATES[self.epidemics]:
+        if len(field.data) != c.infection_rates[self.epidemics]:
             field.data = []
             raise ValidationError("You didn't infect the right number of cities")
 
@@ -171,19 +173,17 @@ class InfectForm(SetupInfectForm):
         self.epidemics = game_state["epidemics"]
 
         self.cities.description = "Cities infected this turn"
-        self.skip_infection.choices = [
-            (ch.character.name, ("Yes", ch.color_index)) for ch in characters
-        ]
+        self.skip_infection.choices = [(ch.character.name, ch) for ch in characters]
 
         choices = []
-        for i in range(1, 7):
+        for i in range(1, max(game_state["stack"]) + 1):
             choices.extend(
-                (city_name, city_name)
+                (city_name, c.city_dict[city_name])
                 for city_name in game_state["stack"][i]
                 for j in range(game_state["stack"][i][city_name])
             )
 
-            if len(choices) >= c.INFECTION_RATES[self.epidemics]:
+            if len(choices) >= c.infection_rates[self.epidemics]:
                 break
 
         self.cities.choices = choices
@@ -191,7 +191,7 @@ class InfectForm(SetupInfectForm):
         self._fields = order_fields(self._fields, self._order)
 
     def validate_cities(self, field):
-        if len(self.skip_infection.data) == c.NUM_PLAYERS:
+        if len(self.skip_infection.data) == c.num_players:
             if len(field.data) > 0:
                 field.data = []
                 self.skip_infection.data = []
@@ -200,7 +200,7 @@ class InfectForm(SetupInfectForm):
             super(InfectForm, self).validate_cities(field)
 
     def validate_skip_infection(self, field):
-        if 0 < len(field.data) < c.NUM_PLAYERS:
+        if 0 < len(field.data) < c.num_players:
             field.data = []
             raise ValidationError("All players must authorize this decision")
 
@@ -219,7 +219,7 @@ class ResilientPopForm(FlaskForm):
 
         self.game.data = game_state["game_id"]
         self.resilient_cities.choices = [
-            (city_name, city_name)
+            (city_name, c.city_dict[city_name])
             for city_name in game_state["stack"][0]
             for i in range(game_state["stack"][0][city_name])
         ]
@@ -249,7 +249,7 @@ class ForecastForm(FlaskForm):
         cities = []
         for i in range(1, max(game_state["stack"]) + 1):
             cities.extend(
-                city_name
+                c.city_dict[city_name]
                 for city_name in game_state["stack"][i]
                 for j in range(game_state["stack"][i][city_name])
             )
@@ -272,12 +272,10 @@ class ReplayForm(FlaskForm):
 
     def __init__(self, game_id, characters, *args, **kwargs):
         super(ReplayForm, self).__init__(*args, **kwargs)
-        self.authorize.choices = [
-            (ch.character.name, ("Yes", ch.color_index)) for ch in characters
-        ]
+        self.authorize.choices = [(ch.character.name, ch) for ch in characters]
         self.game.data = game_id
 
     def validate_authorize(self, field):
-        if 0 < len(field.data) < c.NUM_PLAYERS:
+        if 0 < len(field.data) < c.num_players:
             field.data = []
             raise ValidationError("All players must authorize this decision")

@@ -15,8 +15,8 @@ def character_list():
             '<div class="btn col-xs-3 btn-option">'
             '<span class="glyphicon {}" aria-hidden="true"></span>'
             " {}</div>"
-        ).format(c.CHARACTERS[char].icon, char)
-        for char in c.CHARACTERS
+        ).format(char.icon, char.name)
+        for char in c.characters
     )
     html.append("</div></div>")
 
@@ -31,8 +31,8 @@ def city_list(cities):
     ]
 
     html.extend(
-        f'<div class="btn city-{c.CITIES[city_name]} col-xs-3"> {city_name}</div>'
-        for city_name in cities
+        f'<div class="btn city-{city.color} col-xs-3"> {city.name}</div>'
+        for city in cities
     )
     html.append("</div></div>")
 
@@ -116,12 +116,10 @@ def select_cities(field, **kwargs):
     field_id = kwargs.pop("id", field.id)
     html = [
         "<div {}>".format(
-            widgets.html_params(
-                id=field_id, class_="row", data_toggle="buttons"
-            )
+            widgets.html_params(id=field_id, class_="row", data_toggle="buttons")
         )
     ]
-    for value, label, checked in field.iter_choices():
+    for value, city, checked in field.iter_choices():
         choice_id = f"{field_id}-{value}"
         options = dict(
             kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"
@@ -132,7 +130,7 @@ def select_cities(field, **kwargs):
             (
                 '<div class="btn city-{} col-sm-3"><input {} /> '
                 '<label for="{}">{}</label></div>'
-            ).format(c.CITIES[value], widgets.html_params(**options), field_id, label)
+            ).format(city.color, widgets.html_params(**options), field_id, city.name)
         )
     html.append("</div>")
     return widgets.HTMLString("".join(html))
@@ -143,12 +141,10 @@ def authorization(field, **kwargs):
     field_id = kwargs.pop("id", field.id)
     html = [
         "<div {}>".format(
-            widgets.html_params(
-                id=field_id, class_="row", data_toggle="buttons"
-            )
+            widgets.html_params(id=field_id, class_="row", data_toggle="buttons")
         )
     ]
-    for value, (label, ci), checked in field.iter_choices():
+    for value, ch, checked in field.iter_choices():
         choice_id = f"{field_id}-{value}"
         options = dict(
             kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"
@@ -157,14 +153,14 @@ def authorization(field, **kwargs):
             options["checked"] = "checked"
         html.append(
             (
-                '<div class="btn players-{} col-sm-2"><input {} /> <label for="{}">'
-                '<span class="glyphicon {}" aria-hidden="true"></span> {}</label></div>'
+                '<div class="btn players-{} col-xs-2"><input {} /> <label for="{}">'
+                '<span class="glyphicon {}" aria-hidden="true"></span> Yes</label>'
+                "</div>"
             ).format(
-                ci,
+                ch.color_index,
                 widgets.html_params(**options),
                 field_id,
-                c.CHARACTERS[value].icon,
-                label,
+                ch.character.icon,
             )
         )
     html.append("</div>")

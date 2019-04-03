@@ -8,10 +8,21 @@
       <div class="row">
         <div class="col-sm-5 h3">Epidemics: {{ game_state['epidemics'] }}</div>
         <div class="col-sm-5 h3 {{ game_state['epi_risk'] | danger_level }}">
-          {%  if game_state['epi_risk'] > 1.0 %}
+          {% if game_state['epi_risk'] > 1.0 %}
             Epidemic Risk: 100 + {{ (game_state['epi_risk'] - 1) | to_percent }}
-          {% else %}
+          {% elif game_state['epi_risk'] > 0.0 %}
             Epidemic Risk: {{ game_state['epi_risk'] | to_percent }}
+          {% else %}
+            Epidemic Risk: <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-10 h3">
+          {% if game_state['epi_risk'] > 1.0 %}
+            Epidemic incoming! Second epidemic within {{ game_state['epi_in'] + 1 }} cards
+          {% else %}
+            Next epidemic within {{ game_state['epi_in'] }} cards
           {% endif %}
         </div>
       </div>
@@ -21,13 +32,13 @@
             <tr class="gs-header">
               <th rowspan="2">hidden</th>
               <th rowspan="2">City</th>
-              <th colspan="{{ game_state['cards_per_city'] }}">Infection Risk</th>
+              <th colspan="{{ game_state['max_infection'] }}">Infection Risk</th>
               <th rowspan="2">Epidemic</th>
             </tr>
             <tr class="gs-header">
-              <th>1</th>
-              <th>2</th>
-              <th>3</th>
+              {%- for i in range(game_state['max_infection']) %}
+                <th>{{ i + 1 }}</th>
+              {%- endfor %}
             </tr>
           </thead>
           <tbody>
@@ -38,7 +49,13 @@
               {%- for stack, inf_risk in city['inf_risk'] %}
                 <td class="infection-risk {{ inf_risk | danger_level }}"><span class="{{ stack | to_glyph }}"></span>  {{ inf_risk | to_percent }}</td>
               {%- endfor %}
-              <td class="epidemic-risk {{ city['epi_risk'] | danger_level }}">{{ city['epi_risk'] | to_percent }}</td>
+              <td class="epidemic-risk {{ city['epi_risk'] | danger_level }}">
+                {% if city['epi_risk'] > 0.0 %}
+                  {{ city['epi_risk'] | to_percent }}
+                {% else %}
+                  <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                {% endif %}
+              </td>
             </tr>
           {%- endfor %}
           </tbody>

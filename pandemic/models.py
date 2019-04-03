@@ -15,7 +15,7 @@ class PlayerSession(db.Model):
     character = db.relationship("Character", backref="games", lazy=True)
 
     def __repr__(self):
-        return f"<Game {self.game_id} - {self.player_name} - {self.character.name}>"
+        return f"<Game {self.game_id} - {self.character.name}>"
 
 
 class Game(db.Model):
@@ -36,10 +36,11 @@ class Character(db.Model):
     name = db.Column(db.String(32), nullable=False)  # character name/role
     first_name = db.Column(db.String(32), nullable=False)  # first name
     middle_name = db.Column(db.String(32), nullable=False)  # middle name/initial
+    haven = db.Column(db.String(32), nullable=False)  # home haven
     icon = db.Column(db.String(32), nullable=False)  # glyphicon used for buttons
 
     def __repr__(self):
-        return f"{self.first_name} {self.middle_name} {self.name}"
+        return f"{self.first_name} {self.middle_name} {self.name} from {self.haven}"
 
 
 draws = db.Table(
@@ -87,8 +88,6 @@ class City(db.Model):
     name = db.Column(db.String(32), nullable=False)  # city name
     color = db.Column(db.String(32), nullable=False)  # (original) color of the city
 
-    # # turns when this city was drawn as a player card
-    # draws = db.relationship("Turn", secondary=draws, lazy=True, backref="draws")
     # turns when this city was drawn as an epidemic
     epidemics = db.relationship(
         "Turn", secondary=epidemics, lazy=True, backref="epidemic"
@@ -112,7 +111,7 @@ class Turn(db.Model):
     def __repr__(self):
         return "<Turn {}: {} infected>".format(
             self.turn_num,
-            ", ".join(city.name for city in self.infections)
+            ", ".join(ci.city.name for ci in self.infections)
             if self.infections
             else "No cities",
         )

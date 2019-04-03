@@ -51,17 +51,18 @@ def init_db():
 
     db.create_all()
     db.session.add_all(
-        [
-            models.City(name=city_name, color=city_color)
-            for city_name, city_color in constants.CITIES.items()
-        ]
+        [models.City(name=city.name, color=city.color) for city in constants.cities]
     )
     db.session.add_all(
         [
             models.Character(
-                name=name, first_name=first_name, middle_name=middle_name, icon=icon
+                name=char.name,
+                first_name=char.first_name,
+                middle_name=char.middle_name,
+                haven=char.haven,
+                icon=char.icon,
             )
-            for name, (first_name, middle_name, icon) in constants.CHARACTERS.items()
+            for char in constants.characters
         ]
     )
     db.session.commit()
@@ -74,16 +75,30 @@ def initdb_command():
     print("Initialized the database.")
 
 
-@app.cli.command("newchar")
+@app.cli.command("addchar")
 @click.option("--first", help="First name")
 @click.option("--middle", help="Middle name/initial/nickname")
 @click.option("--last", help="Character name/last name")
+@click.option("--haven", help="Home haven")
 @click.option("--icon", help="Glyphicon icon")
-def newchar_command(first, middle, last, icon):
+def addchar_command(first, middle, last, haven, icon):
     from . import models
 
     db.session.add(
-        models.Character(name=last, first_name=first, middle_name=middle, icon=icon)
+        models.Character(
+            name=last, first_name=first, middle_name=middle, haven=haven, icon=icon
+        )
     )
     db.session.commit()
-    print("Added new character: welcome, {} {} {}!".format(first, middle, last))
+    print(f"Added new character: welcome, {first} {middle} {last} from {haven}!")
+
+
+@app.cli.command("addcity")
+@click.option("--name", help="City name")
+@click.option("--color", help="Region color")
+def addcity_command(name, color):
+    from . import models
+
+    db.session.add(models.City(name=name, color=color))
+    db.session.commit()
+    print(f"Added new city: {name} ({color})")

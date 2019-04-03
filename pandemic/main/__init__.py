@@ -71,23 +71,23 @@ def get_game_state(game, draw_phase=True):
 
     # deck size after dealing the initial hands
     post_setup_deck_size = (
-        c.BASE_DECK_SIZE
-        + c.EPIDEMICS
+        sum(city.player_cards for city in c.cities)
+        + c.epidemics
         + game.funding_rate
         + game.extra_cards
-        - c.NUM_PLAYERS * c.INITIAL_HAND_SIZE[c.NUM_PLAYERS]
+        - c.num_players * c.initial_hand_size[c.num_players]
     )
     # number of post-setup cards drawn so far
     if game.turn_num == -1:
         ps_cards_drawn = 0
     else:
-        ps_cards_drawn = (len(turns) - 1 - draw_phase) * c.DRAW
+        ps_cards_drawn = (len(turns) - 1 - draw_phase) * c.draw
     # how many cards are left
     deck_size = post_setup_deck_size - ps_cards_drawn
 
     stack = defaultdict(Counter)
-    for city_name in c.CITIES:
-        stack[1][city_name] = c.CARDS_PER_CITY
+    for city in c.cities:
+        stack[1][city.name] = city.infection_cards
 
     epidemics = 0
 
@@ -177,7 +177,7 @@ def get_game_state(game, draw_phase=True):
 
     print_stack(stack)
 
-    epidemic_stacks = Counter((i % c.EPIDEMICS) for i in range(post_setup_deck_size))
+    epidemic_stacks = Counter((i % c.epidemics) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())
 
     i_block = epidemic_blocks[ps_cards_drawn]
@@ -192,19 +192,27 @@ def get_game_state(game, draw_phase=True):
                 # this epidemic has already been drawn
                 epidemic_risk = 0.0
             else:
+                assert epidemic_stacks[i_block] == 1
                 # the second card could be one
                 epidemic_risk = 1.0 / epidemic_stacks[j_block]
+            # next epidemic is in the next block somewhere
+            epidemic_in = epidemic_stacks[i_block] + epidemic_stacks[j_block]
         elif i_block == j_block:
             # both are same block, and it hasn't been drawn yet
             epidemic_risk = 2.0 / epidemic_stacks[i_block]
+            # next epidemic is in this block
+            epidemic_in = epidemic_stacks[i_block]
         else:
             # first card is definitely an epidemic, second one might be!
             assert epidemic_stacks[i_block] == 1
             epidemic_risk = 1.0 + 1.0 / epidemic_stacks[j_block]
+            # next epidemic is... right now! and then the next block
+            epidemic_in = epidemic_stacks[j_block]
     else:
         epidemic_risk = 0.0
+        epidemic_in = epidemic_stacks[0]
 
-    infection_rate = c.INFECTION_RATES[epidemics]
+    infection_rate = c.infection_rates[epidemics]
 
     city_probs = defaultdict(list)
 
@@ -231,7 +239,11 @@ def get_game_state(game, draw_phase=True):
         for city_name in stack[i]:
             for j in range(stack[i][city_name]):
                 city_probs[city_name].append((i, 0.0))
-    print(city_probs)
+
+    for city in c.cities:
+        for j in range(city.infection_cards, c.max_infection):
+            city_probs[city.name].append((-1, 0.0))
+
     epi_probs = defaultdict(
         float,
         {
@@ -242,12 +254,12 @@ def get_game_state(game, draw_phase=True):
 
     city_data = [
         dict(
-            name=city_name,
-            color=city_color,
-            inf_risk=city_probs[city_name],
-            epi_risk=epi_probs[city_name],
+            name=city.name,
+            color=city.color,
+            inf_risk=city_probs[city.name],
+            epi_risk=epi_probs[city.name],
         )
-        for city_name, city_color in c.CITIES.items()
+        for city in c.cities
     ]
 
     return {
@@ -256,10 +268,11 @@ def get_game_state(game, draw_phase=True):
         "turns": turns,
         "deck_size": deck_size,
         "epi_risk": epidemic_risk,
+        "epi_in": epidemic_in,
         "epidemics": epidemics,
         "city_data": city_data,
         "stack": stack,
-        "cards_per_city": c.CARDS_PER_CITY,
+        "max_infection": c.max_infection,
     }
 
 
