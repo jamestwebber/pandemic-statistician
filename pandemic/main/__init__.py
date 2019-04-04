@@ -15,9 +15,11 @@ main = Blueprint("main", __name__)
 def print_stack(stack):
     for i in sorted(stack):
         print(
-            "stack {}:\n\t{}".format(
-                i, "\n\t".join(f"{c} ({stack[i][c]})" for c in stack[i])
+            f"stack {i}:",
+            "\n\t".join(
+                f"{city_name} ({stack[i][city_name]})" for city_name in stack[i]
             ),
+            sep="\n\t",
             end="\n\n",
         )
 
@@ -28,20 +30,34 @@ def clean_stack(stack):
         {i: Counter(stack[i].elements()) for i in stack if sum(stack[i].values()) > 0},
     )
 
-    return stack, max(stack)
+    return stack
 
 
-def resolve_epidemic(stack, epidemic_city, max_stack, inc_stack):
-    if stack[max_stack][epidemic_city] < 1:
+def increment_stack(stack):
+    new_stack = defaultdict(
+        Counter, {(i + 1): Counter(stack[i].elements()) for i in stack if i > -1}
+    )
+    new_stack[-1] = stack[-1]
+
+    return clean_stack(new_stack)
+
+
+def decrement_stack(stack):
+    new_stack = defaultdict(
+        Counter, {(i - 1): Counter(stack[i].elements()) for i in stack if i > 0}
+    )
+    new_stack[-1] = stack[-1]
+    new_stack[0] = stack[0]
+
+    return clean_stack(new_stack)
+
+
+def epidemic(stack, epidemic_city):
+    if stack[max(stack)][epidemic_city] < 1:
         flash("WARNING: this epidemic shouldn't be possible, check records!")
     else:
-        stack[max_stack][epidemic_city] -= 1
+        stack[max(stack)][epidemic_city] -= 1
         stack[0][epidemic_city] += 1
-
-    if inc_stack:
-        for s in range(max_stack, -1, -1):
-            stack[s + 1] = stack[s]
-        stack[0] = Counter()
 
     return clean_stack(stack)
 
@@ -95,14 +111,38 @@ def get_game_state(game, draw_phase=True):
         print(f"----- TURN {len(turns) - 1} ---------", end="\n\n")
 
     for i, turn in enumerate(turns):
-        stack, max_s = clean_stack(stack)
+        stack = clean_stack(stack)
         if current_app.debug:
             print(f"on turn {turn.turn_num}:")
             print_stack(stack)
 
-        inc_stack = i < len(turns) - 1 or (not draw_phase)
+        if turn.epidemic and turn.resilient_pop:
+            if current_app.debug:
+                print(
+                    f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})",
+                    f"\nepidemic: {', '.join(city.name for city in turn.epidemic)}",
+                )
 
-        if turn.resilient_pop:
+            epidemics += 1
+            stack = epidemic(stack, turn.epidemic[0].name)
+
+            if turn.res_pop_epi == 1:
+                stack[0][turn.resilient_pop.name] -= turn.res_pop_count
+                stack[-1][turn.resilient_pop.name] += turn.res_pop_count
+
+            stack = increment_stack(stack)
+
+            if len(turn.epidemic) == 2:
+                epidemics += 1
+                stack = epidemic(stack, turn.epidemic[1].name)
+
+                if turn.res_pop_epi == 2:
+                    stack[0][turn.resilient_pop.name] -= turn.res_pop_count
+                    stack[-1][turn.resilient_pop.name] += turn.res_pop_count
+
+                stack = increment_stack(stack)
+
+        elif turn.resilient_pop:
             if current_app.debug:
                 print(
                     f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})"
@@ -110,21 +150,16 @@ def get_game_state(game, draw_phase=True):
             stack[0][turn.resilient_pop.name] -= turn.res_pop_count
             stack[-1][turn.resilient_pop.name] += turn.res_pop_count
 
-            stack, max_s = clean_stack(stack)
-
-        if turn.epidemic:
+            stack = clean_stack(stack)
+        elif turn.epidemic:
             if current_app.debug:
                 print(f"epidemic: {', '.join(city.name for city in turn.epidemic)}")
             epidemics += 1
-            stack, max_s = resolve_epidemic(
-                stack, turn.epidemic[0].name, max_s, inc_stack
-            )
+            stack = increment_stack(epidemic(stack, turn.epidemic[0].name))
 
             if len(turn.epidemic) == 2:
                 epidemics += 1
-                stack, max_s = resolve_epidemic(
-                    stack, turn.epidemic[1].name, max_s, inc_stack
-                )
+                stack = increment_stack(epidemic(stack, turn.epidemic[1].name))
 
         if turn.forecasts:
             if current_app.debug:
@@ -133,17 +168,17 @@ def get_game_state(game, draw_phase=True):
             new_stack = defaultdict(Counter, {0: stack[0], -1: stack[-1]})
             for cf in turn.forecasts:
                 new_stack[cf.stack_order][cf.city.name] += 1
-                j = min(j for j in range(1, max_s + 1) if stack[j][cf.city.name] > 0)
+                j = min(j for j in stack if j > 0 and stack[j][cf.city.name] > 0)
                 stack[j][cf.city.name] -= 1
 
-            for j in range(1, max_s + 1):
+            for j in range(1, max(stack) + 1):
                 new_stack[j + 8] = stack[j]
 
             stack = new_stack
             if current_app.debug:
                 print_stack(stack)
 
-        stack, max_s = clean_stack(stack)
+        stack = clean_stack(stack)
 
         infected_cities = Counter({ci.city.name: ci.count for ci in turn.infections})
 
@@ -154,9 +189,12 @@ def get_game_state(game, draw_phase=True):
             )
 
         while sum(infected_cities.values()):
+            while sum(stack[1].values()) == 0:
+                stack = decrement_stack(stack)
+
             # all of the infected cities currently in top group
             possible_cities = infected_cities & stack[1]
-            print("possible:", possible_cities)
+
             if not len(possible_cities):
                 flash(
                     "WARNING: looks like a city was infected too early, check records!"
@@ -168,12 +206,10 @@ def get_game_state(game, draw_phase=True):
                 stack[1][city_name] -= 1
                 stack[0][city_name] += 1
 
-            if sum(stack[1].values()) == 0:
-                for s in range(1, max_s):
-                    stack[s] = stack[s + 1].copy()
-                stack[max_s] = Counter()
+    while sum(stack[1].values()) == 0:
+        stack = decrement_stack(stack)
 
-    stack, max_s = clean_stack(stack)
+    stack = clean_stack(stack)
 
     print_stack(stack)
 
@@ -216,7 +252,7 @@ def get_game_state(game, draw_phase=True):
 
     city_probs = defaultdict(list)
 
-    for i in range(1, max_s + 1):
+    for i in range(1, max(stack) + 1):
         n = sum(stack[i].values())
         if n <= infection_rate:
             for city_name in stack[i]:
@@ -247,8 +283,8 @@ def get_game_state(game, draw_phase=True):
     epi_probs = defaultdict(
         float,
         {
-            city_name: stack[max_s][city_name] / sum(stack[max_s].values())
-            for city_name in stack[max_s]
+            city_name: stack[max(stack)][city_name] / sum(stack[max(stack)].values())
+            for city_name in stack[max(stack)]
         },
     )
 

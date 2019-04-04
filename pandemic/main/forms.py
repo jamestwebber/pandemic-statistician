@@ -79,6 +79,11 @@ class DrawForm(FlaskForm):
         widget=wdg.authorization,
         description="Authorize Resilient Population",
     )
+    second_resilient_population = SelectMultipleField(
+        "Resilient Population (2nd Epidemic)",
+        widget=wdg.authorization,
+        description="Authorize Resilient Population during second epidemic",
+    )
     city_forecast = SelectMultipleField(
         "City Forecast", widget=wdg.authorization, description="Authorize City Forecast"
     )
@@ -94,12 +99,17 @@ class DrawForm(FlaskForm):
 
         if self.turn_num == -1:
             del self.resilient_population
+            del self.second_resilient_population
             del self.city_forecast
         else:
-            self.resilient_population.choices = [
-                (ch.character.name, ch) for ch in characters
-            ]
-            self.city_forecast.choices = [(ch.character.name, ch) for ch in characters]
+            character_list = [(ch.character.name, ch) for ch in characters]
+            self.resilient_population.choices = character_list[:]
+            self.city_forecast.choices = character_list[:]
+
+            if game_state["epi_risk"] > 1.0:
+                self.second_resilient_population.choices = character_list[:]
+            else:
+                del self.second_resilient_population
 
         if game_state["epi_risk"] == 0.0 or self.turn_num == -1:
             del self.epidemic
@@ -120,6 +130,13 @@ class DrawForm(FlaskForm):
         if 0 < len(field.data) < c.num_players:
             field.data = []
             raise ValidationError("All players must authorize Resilient Population")
+
+    def validate_second_resilient_population(self, field):
+        if 0 < len(field.data) < c.num_players:
+            field.data = []
+            raise ValidationError("All players must authorize Resilient Population")
+        if len(field.data) > 0 and not self.second_epidemic.data:
+            raise ValidationError("There wasn't a second epidemic during this turn")
 
     def validate_city_forecast(self, field):
         if 0 < len(field.data) < c.num_players:
@@ -214,14 +231,15 @@ class ResilientPopForm(FlaskForm):
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
 
-    def __init__(self, game_state, *args, **kwargs):
+    def __init__(self, game_state, r_stack, *args, **kwargs):
         super(ResilientPopForm, self).__init__(*args, **kwargs)
 
         self.game.data = game_state["game_id"]
+
         self.resilient_cities.choices = [
             (city_name, c.city_dict[city_name])
-            for city_name in game_state["stack"][0]
-            for i in range(game_state["stack"][0][city_name])
+            for city_name in game_state["stack"][r_stack]
+            for i in range(game_state["stack"][r_stack][city_name])
         ]
 
     def validate_resilient_cities(self, field):

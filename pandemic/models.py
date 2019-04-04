@@ -105,7 +105,10 @@ class Turn(db.Model):
 
     # turns when a city was exiled using resilient population (one-to-many)
     res_pop_id = db.Column(db.Integer, db.ForeignKey("cities.id"), nullable=True)
+    # number of cities exiled (1 or 2)
     res_pop_count = db.Column(db.Integer, nullable=True)
+    # if played during epidemic(s), which epidemic it was played on
+    res_pop_epi = db.Column(db.Integer, nullable=True)
     resilient_pop = db.relationship("City", lazy=True, backref="resilient_pops")
 
     def __repr__(self):

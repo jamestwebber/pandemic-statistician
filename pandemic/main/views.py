@@ -118,23 +118,46 @@ def draw(game_id=None):
 
     if form.validate_on_submit():
         if form.epidemic and form.epidemic.data:
-            turn.epidemic = [City.query.filter_by(name=form.epidemic.data).first()]
+            turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
             if "second_epidemic" in form and form.second_epidemic.data:
                 turn.epidemic.append(
-                    City.query.filter_by(name=form.second_epidemic.data).first()
+                    City.query.filter_by(name=form.second_epidemic.data).one()
                 )
+                res_s = 2
+            else:
+                res_s = 1
+        else:
+            res_s = 0
+
+        do_res_pop = bool(
+            form.resilient_population
+            and len(form.resilient_population.data) == c.num_players
+        )
+
+        if (
+            "second_resilient_population" in form
+            and form.second_resilient_population
+            and len(form.second_resilient_population.data) == c.num_players
+        ):
+            # only possible if there are two epidemics
+            do_res_pop = True
+            res_s = 1
+
+        do_forecast = bool(
+            form.city_forecast and len(form.city_forecast.data) == c.num_players
+        )
 
         db.session.commit()
 
-        if (
-            form.resilient_population
-            and len(form.resilient_population.data) == c.num_players
-        ):
-            if form.city_forecast and len(form.city_forecast.data) == c.num_players:
-                return redirect(url_for(".resilientpop", forecast=1))
-            else:
-                return redirect(url_for(".resilientpop"))
-        elif form.city_forecast and len(form.city_forecast.data) == c.num_players:
+        if do_res_pop:
+            # if res pop was played, we look at stack 0 (if no epidemics), 1 (if only
+            # ony occured), or 2 (if it was played on the first of two)
+            # if there were two epidemics and res pop was played on the second,
+            # we look at stack 1 for the city (there will only be one)
+            return redirect(
+                url_for(".resilientpop", r_stack=res_s, also_forecast=int(do_forecast))
+            )
+        elif do_forecast:
             return redirect(url_for(".forecast"))
         else:
             return redirect(url_for(".infect"))
@@ -144,15 +167,15 @@ def draw(game_id=None):
     )
 
 
-@main.route("/resilientpop", methods=("GET", "POST"))
-@main.route("/resilientpop/<int:also_forecast>", methods=("GET", "POST"))
-def resilientpop(also_forecast=0):
+@main.route("/resilientpop/<int:r_stack>", methods=("GET", "POST"))
+@main.route("/resilientpop/<int:r_stack>/<int:also_forecast>", methods=("GET", "POST"))
+def resilientpop(r_stack=0, also_forecast=0):
     if session.get("game_id", None) is None:
         flash("No game in progress", "error")
         return redirect(url_for(".begin"))
 
     game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).first()
+    game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
         flash("No game with that ID", "error")
         session["game_id"] = None
@@ -167,7 +190,7 @@ def resilientpop(also_forecast=0):
 
     game_state = get_game_state(game)
 
-    form = forms.ResilientPopForm(game_state)
+    form = forms.ResilientPopForm(game_state, r_stack)
 
     if form.validate_on_submit():
         if form.game.data != game_id:
@@ -178,8 +201,15 @@ def resilientpop(also_forecast=0):
 
         this_turn.resilient_pop = City.query.filter(
             City.name.in_(form.resilient_cities.data)
-        ).first()
+        ).one()
         this_turn.res_pop_count = len(form.resilient_cities.data)
+        if len(this_turn.epidemic) == 1:
+            this_turn.res_pop_epi = 1
+        elif len(this_turn.epidemic) == 2:
+            this_turn.res_pop_epi = 3 - r_stack
+        else:
+            this_turn.res_pop_epi = 0
+
         db.session.commit()
 
         if also_forecast:
@@ -202,7 +232,7 @@ def forecast():
         return redirect(url_for(".begin"))
 
     game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).first()
+    game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
         flash("No game with that ID", "error")
         session["game_id"] = None
@@ -225,7 +255,7 @@ def forecast():
             return redirect(url_for(".begin"))
 
         for fc in form.forecast_cities.data:
-            city = City.query.filter_by(name=fc["city_name"]).first()
+            city = City.query.filter_by(name=fc["city_name"]).one()
             cf = CityForecast(
                 city_id=city.id,
                 turn_id=this_turn.id,
@@ -254,7 +284,7 @@ def infect(game_id=None):
         session["game_id"] = game_id
 
     game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).first()
+    game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
         flash("No game with that ID", "error")
         session["game_id"] = None
@@ -267,7 +297,7 @@ def infect(game_id=None):
         flash("Not on the infection step right now", "error")
         return redirect(url_for(".draw"))
 
-    game_state = get_game_state(game, False)
+    game_state = get_game_state(game, draw_phase=False)
 
     if game.turn_num == -1:
         form = forms.SetupInfectForm(game_state)
@@ -282,7 +312,7 @@ def infect(game_id=None):
         infected_cities = Counter(form.cities.data)
 
         for city_name in infected_cities:
-            city = City.query.filter_by(name=city_name).first()
+            city = City.query.filter_by(name=city_name).one()
             ci = CityInfection(
                 city_id=city.id,
                 turn_id=this_turn.id,
