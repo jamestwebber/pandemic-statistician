@@ -124,21 +124,21 @@ def get_game_state(game, draw_phase=True):
                 )
 
             epidemics += 1
-            stack = epidemic(stack, turn.epidemic[0].dataclass)
+            stack = epidemic(stack, turn.epidemic[0])
 
             if turn.res_pop_epi == 1:
-                stack[0][turn.resilient_pop.dataclass] -= turn.res_pop_count
-                stack[-1][turn.resilient_pop.dataclass] += turn.res_pop_count
+                stack[0][turn.resilient_pop] -= turn.res_pop_count
+                stack[-1][turn.resilient_pop] += turn.res_pop_count
 
             stack = increment_stack(stack)
 
             if len(turn.epidemic) == 2:
                 epidemics += 1
-                stack = epidemic(stack, turn.epidemic[1].dataclass)
+                stack = epidemic(stack, turn.epidemic[1])
 
                 if turn.res_pop_epi == 2:
-                    stack[0][turn.resilient_pop.dataclass] -= turn.res_pop_count
-                    stack[-1][turn.resilient_pop.dataclass] += turn.res_pop_count
+                    stack[0][turn.resilient_pop] -= turn.res_pop_count
+                    stack[-1][turn.resilient_pop] += turn.res_pop_count
 
                 stack = increment_stack(stack)
 
@@ -147,19 +147,19 @@ def get_game_state(game, draw_phase=True):
                 print(
                     f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})"
                 )
-            stack[0][turn.resilient_pop.dataclass] -= turn.res_pop_count
-            stack[-1][turn.resilient_pop.dataclass] += turn.res_pop_count
+            stack[0][turn.resilient_pop] -= turn.res_pop_count
+            stack[-1][turn.resilient_pop] += turn.res_pop_count
 
             stack = clean_stack(stack)
         elif turn.epidemic:
             if current_app.debug:
                 print(f"epidemic: {', '.join(city.name for city in turn.epidemic)}")
             epidemics += 1
-            stack = increment_stack(epidemic(stack, turn.epidemic[0].dataclass))
+            stack = increment_stack(epidemic(stack, turn.epidemic[0]))
 
             if len(turn.epidemic) == 2:
                 epidemics += 1
-                stack = increment_stack(epidemic(stack, turn.epidemic[1].dataclass))
+                stack = increment_stack(epidemic(stack, turn.epidemic[1]))
 
         if turn.forecasts:
             if current_app.debug:
@@ -167,9 +167,9 @@ def get_game_state(game, draw_phase=True):
 
             new_stack = defaultdict(Counter, {0: stack[0], -1: stack[-1]})
             for cf in turn.forecasts:
-                new_stack[cf.stack_order][cf.city.dataclass] += 1
-                j = min(j for j in stack if j > 0 and stack[j][cf.city.dataclass] > 0)
-                stack[j][cf.city.dataclass] -= 1
+                new_stack[cf.stack_order][cf.city] += 1
+                j = min(j for j in stack if j > 0 and stack[j][cf.city] > 0)
+                stack[j][cf.city] -= 1
 
             for j in range(1, max(stack) + 1):
                 new_stack[j + 8] = stack[j]
@@ -180,9 +180,7 @@ def get_game_state(game, draw_phase=True):
 
         stack = clean_stack(stack)
 
-        infected_cities = Counter(
-            {ci.city.dataclass: ci.count for ci in turn.infections}
-        )
+        infected_cities = Counter({ci.city: ci.count for ci in turn.infections})
 
         if current_app.debug:
             print(

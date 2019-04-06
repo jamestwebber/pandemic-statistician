@@ -42,11 +42,15 @@ class Character(db.Model):
     def __repr__(self):
         return f"{self.first_name} {self.middle_name} {self.name} from {self.haven}"
 
-    @property
-    def dataclass(self):
-        return c.Character(
-            self.name, self.first_name, self.middle_name, self.haven, self.icon
+    def __hash__(self):
+        return hash(
+            c.Character(
+                self.name, self.first_name, self.middle_name, self.haven, self.icon
+            )
         )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 
 draws = db.Table(
@@ -104,9 +108,13 @@ class City(db.Model):
     def __repr__(self):
         return self.name
 
-    @property
-    def dataclass(self):
-        return c.City(self.name, self.color, self.player_cards, self.infection_cards)
+    def __hash__(self):
+        return hash(
+            c.City(self.name, self.color, self.player_cards, self.infection_cards)
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 
 class Turn(db.Model):
