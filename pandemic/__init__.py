@@ -51,7 +51,15 @@ def init_db():
 
     db.create_all()
     db.session.add_all(
-        [models.City(name=city.name, color=city.color) for city in constants.cities]
+        [
+            models.City(
+                name=city.name,
+                color=city.color,
+                player_cards=city.player_cards,
+                infection_cards=city.infection_cards,
+            )
+            for city in constants.cities
+        ]
     )
     db.session.add_all(
         [
@@ -96,9 +104,18 @@ def addchar_command(first, middle, last, haven, icon):
 @app.cli.command("addcity")
 @click.option("--name", help="City name")
 @click.option("--color", help="Region color")
-def addcity_command(name, color):
+@click.option("--player_cards", type=int, help="# of cards added to player deck")
+@click.option("--infection_cards", type=int, help="# of cards added to infection deck")
+def addcity_command(name, color, player_cards, infection_cards):
     from . import models
 
-    db.session.add(models.City(name=name, color=color))
+    db.session.add(
+        models.City(
+            name=name,
+            color=color,
+            player_cards=player_cards,
+            infection_cards=infection_cards,
+        )
+    )
     db.session.commit()
     print(f"Added new city: {name} ({color})")

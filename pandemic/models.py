@@ -1,4 +1,4 @@
-from . import db
+from . import db, constants as c
 
 
 class PlayerSession(db.Model):
@@ -41,6 +41,12 @@ class Character(db.Model):
 
     def __repr__(self):
         return f"{self.first_name} {self.middle_name} {self.name} from {self.haven}"
+
+    @property
+    def dataclass(self):
+        return c.Character(
+            self.name, self.first_name, self.middle_name, self.haven, self.icon
+        )
 
 
 draws = db.Table(
@@ -87,14 +93,20 @@ class City(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32), nullable=False)  # city name
     color = db.Column(db.String(32), nullable=False)  # (original) color of the city
+    player_cards = db.Column(db.Integer, nullable=False)  # cards in player deck
+    infection_cards = db.Column(db.Integer, nullable=False)  # cards in infection deck
 
-    # turns when this city was drawn as an epidemic
+    # turns when this city was drawn as an epidemic (many-to-one)
     epidemics = db.relationship(
         "Turn", secondary=epidemics, lazy=True, backref="epidemic"
     )
 
     def __repr__(self):
         return self.name
+
+    @property
+    def dataclass(self):
+        return c.City(self.name, self.color, self.player_cards, self.infection_cards)
 
 
 class Turn(db.Model):

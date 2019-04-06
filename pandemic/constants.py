@@ -31,8 +31,6 @@ cities = [
     City("Tripoli", "black", 4, 3),
 ]
 
-city_dict = {city.name: city for city in cities}
-
 max_infection = max(city.infection_cards for city in cities)
 
 
@@ -60,8 +58,8 @@ infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 infection_glyphs = {
     -1: "glyphicon glyphicon-ban-circle",
     0: "glyphicon glyphicon-remove",
-    1: "glyphicon glyphicon-exclamation-sign",
-    2: "glyphicon glyphicon-minus",
+    1: "glyphicon glyphicon-warning-sign",
+    2: "glyphicon glyphicon-exclamation-sign",
 }
 
 epidemics = 5  # number of epidemics in the deck

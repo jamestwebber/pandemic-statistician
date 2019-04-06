@@ -109,6 +109,7 @@ def draw(game_id=None):
             db.session.delete(ci)
         turn.resilient_pop = None
         turn.res_pop_count = None
+        turn.res_pop_epi = None
 
     db.session.commit()
 
@@ -119,7 +120,7 @@ def draw(game_id=None):
     if form.validate_on_submit():
         if form.epidemic and form.epidemic.data:
             turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
-            if "second_epidemic" in form and form.second_epidemic.data:
+            if form.second_epidemic and form.second_epidemic.data:
                 turn.epidemic.append(
                     City.query.filter_by(name=form.second_epidemic.data).one()
                 )
@@ -129,29 +130,20 @@ def draw(game_id=None):
         else:
             res_s = 0
 
-        do_res_pop = bool(
-            form.resilient_population
-            and len(form.resilient_population.data) == c.num_players
-        )
+        do_res_pop = forms.validate_auth(form.resilient_population)
 
-        if (
-            "second_resilient_population" in form
-            and form.second_resilient_population
-            and len(form.second_resilient_population.data) == c.num_players
-        ):
+        if forms.validate_auth(form.second_resilient_population):
             # only possible if there are two epidemics
             do_res_pop = True
             res_s = 1
 
-        do_forecast = bool(
-            form.city_forecast and len(form.city_forecast.data) == c.num_players
-        )
+        do_forecast = forms.validate_auth(form.city_forecast)
 
         db.session.commit()
 
         if do_res_pop:
-            # if res pop was played, we look at stack 0 (if no epidemics), 1 (if only
-            # ony occured), or 2 (if it was played on the first of two)
+            # if res pop was played, we look at stack 0 (if no epidemics), 1 (if one),
+            # or 2 (if res_pop was played on the first of two)
             # if there were two epidemics and res pop was played on the second,
             # we look at stack 1 for the city (there will only be one)
             return redirect(
@@ -361,7 +353,7 @@ def replay(game_id, turn_num):
     form = forms.ReplayForm(game_id, game.characters)
 
     if form.validate_on_submit():
-        if len(form.authorize.data) == c.num_players:
+        if forms.validate_auth(form.authorize):
             session["game_id"] = game_id
             game.turn_num = turn_num
 

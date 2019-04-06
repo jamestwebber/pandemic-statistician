@@ -29,6 +29,10 @@ def order_fields(fields, order):
     return OrderedDict((k, fields[k]) for k in order)
 
 
+def validate_auth(field):
+    return bool(field and len(field.data) == c.num_players)
+
+
 class PlayerField(Form):
     turn_num = HiddenField("num", validators=[InputRequired()])
     character = HiddenField(
@@ -117,7 +121,7 @@ class DrawForm(FlaskForm):
         else:
             max_stack = max(game_state["stack"])
             epidemic_cities = [("", "")] + [
-                (city_name, city_name) for city_name in game_state["stack"][max_stack]
+                (city.name, city.name) for city in game_state["stack"][max_stack]
             ]
             self.epidemic.choices = epidemic_cities
 
@@ -163,9 +167,9 @@ class SetupInfectForm(FlaskForm):
         self.game.data = game_state["game_id"]
         self.epidemics = -1
         self.cities.choices = [
-            (city_name, c.city_dict[city_name])
-            for city_name in game_state["stack"][1]
-            for j in range(game_state["stack"][1][city_name])
+            (city.name, city)
+            for city in game_state["stack"][1]
+            for _ in range(game_state["stack"][1][city])
         ]
 
     def validate_cities(self, field):
@@ -195,9 +199,9 @@ class InfectForm(SetupInfectForm):
         choices = []
         for i in range(1, max(game_state["stack"]) + 1):
             choices.extend(
-                (city_name, c.city_dict[city_name])
-                for city_name in game_state["stack"][i]
-                for j in range(game_state["stack"][i][city_name])
+                (city.name, city)
+                for city in game_state["stack"][i]
+                for _ in range(game_state["stack"][i][city])
             )
 
             if len(choices) >= c.infection_rates[self.epidemics]:
@@ -208,11 +212,10 @@ class InfectForm(SetupInfectForm):
         self._fields = order_fields(self._fields, self._order)
 
     def validate_cities(self, field):
-        if len(self.skip_infection.data) == c.num_players:
-            if len(field.data) > 0:
-                field.data = []
-                self.skip_infection.data = []
-                raise ValidationError("You shouldn't be infecting any cities")
+        if len(self.skip_infection.data) == c.num_players and len(field.data) > 0:
+            field.data = []
+            self.skip_infection.data = []
+            raise ValidationError("You shouldn't be infecting any cities")
         else:
             super(InfectForm, self).validate_cities(field)
 
@@ -237,9 +240,9 @@ class ResilientPopForm(FlaskForm):
         self.game.data = game_state["game_id"]
 
         self.resilient_cities.choices = [
-            (city_name, c.city_dict[city_name])
-            for city_name in game_state["stack"][r_stack]
-            for i in range(game_state["stack"][r_stack][city_name])
+            (city.name, city)
+            for city in game_state["stack"][r_stack]
+            for _ in range(game_state["stack"][r_stack][city])
         ]
 
     def validate_resilient_cities(self, field):
@@ -267,9 +270,9 @@ class ForecastForm(FlaskForm):
         cities = []
         for i in range(1, max(game_state["stack"]) + 1):
             cities.extend(
-                c.city_dict[city_name]
-                for city_name in game_state["stack"][i]
-                for j in range(game_state["stack"][i][city_name])
+                city
+                for city in game_state["stack"][i]
+                for _ in range(game_state["stack"][i][city])
             )
             if len(cities) >= 8:
                 break
