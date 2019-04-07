@@ -119,8 +119,8 @@ def get_game_state(game, draw_phase=True):
         if turn.epidemic and turn.resilient_pop:
             if current_app.debug:
                 print(
-                    f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})",
-                    f"\nepidemic: {', '.join(city.name for city in turn.epidemic)}",
+                    f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})",
+                    f"\nepidemic: {', '.join(map(str, turn.epidemic))}",
                 )
 
             epidemics += 1
@@ -144,16 +144,14 @@ def get_game_state(game, draw_phase=True):
 
         elif turn.resilient_pop:
             if current_app.debug:
-                print(
-                    f"resilient pop:\t{turn.resilient_pop.name} ({turn.res_pop_count})"
-                )
+                print(f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})")
             stack[0][turn.resilient_pop] -= turn.res_pop_count
             stack[-1][turn.resilient_pop] += turn.res_pop_count
 
             stack = clean_stack(stack)
         elif turn.epidemic:
             if current_app.debug:
-                print(f"epidemic: {', '.join(city.name for city in turn.epidemic)}")
+                print(f"epidemic: {', '.join(map(str, turn.epidemic))}")
             epidemics += 1
             stack = increment_stack(epidemic(stack, turn.epidemic[0]))
 

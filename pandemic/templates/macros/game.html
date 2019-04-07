@@ -75,7 +75,6 @@
         "paging":   false,
         "searching":   false,
         "info":     false,
-        "order":    [],
         "dom": 'rt',
         "columnDefs": [
           { "visible": false, "targets": [ 0 ] },
@@ -127,17 +126,10 @@
     <div class="row col-sm-12 h2">Characters</div>
     <div class="row col-sm-8">
     {% if game.characters %}
-      <div class="row col-sm-12 h4">
-        <div class="col-sm-3">Player</div>
-        <div class="col-sm-3">First Name</div>
-        <div class="col-sm-3">Middle Name</div>
-        <div class="col-sm-3">Character Name</div>
-      </div>
       {% for char in game.characters %}
         <div class="row col-sm-12">
-          <div class="col-sm-3">{{ char.player_name }}</div>
-          <div class="col-sm-3">{{ char.character.first_name or '-'}}</div>
-          <div class="col-sm-3">{{ char.character.middle_name or '-'}}</div>
+          <div class="col-sm-3">{{ char.character.first_name}}</div>
+          <div class="col-sm-3">{{ char.character.middle_name}}</div>
           <div class="col-sm-3">{{ char.character.name }}</div>
         </div>
       {% endfor %}

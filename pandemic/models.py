@@ -76,7 +76,7 @@ class CityInfection(db.Model):
     turn = db.relationship("Turn", backref="infections", lazy=True)
 
     def __repr__(self):
-        return f"<{self.count} infection(s) of {self.city.name}>"
+        return f"<{self.city.name} ({self.count})>"
 
 
 class CityForecast(db.Model):
