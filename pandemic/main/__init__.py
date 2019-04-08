@@ -249,18 +249,19 @@ def get_game_state(game, draw_phase=True):
         epidemic_in = epidemic_stacks[0]
 
     infection_rate = c.infection_rates[epidemics]
+    max_inf = max(city.infection_cards for city in c.cities)
 
-    city_probs = defaultdict(list)
+    inf_risk = defaultdict(list)
 
     for i in range(1, max(stack) + 1):
         n = sum(stack[i].values())
         if n <= infection_rate:
             for city in stack[i]:
-                city_probs[city].extend(((i, 1.0),) * stack[i][city])
+                inf_risk[city].extend(((i, 1.0),) * stack[i][city])
             infection_rate -= n
         elif infection_rate > 0:
             for city in stack[i]:
-                city_probs[city].extend(
+                inf_risk[city].extend(
                     (i, hg_pmf(j, n, stack[i][city], infection_rate))
                     for j in range(1, stack[i][city] + 1)
                 )
@@ -268,18 +269,18 @@ def get_game_state(game, draw_phase=True):
             infection_rate -= n
         else:
             for city in stack[i]:
-                city_probs[city].extend(((i, 0.0),) * stack[i][city])
+                inf_risk[city].extend(((i, 0.0),) * stack[i][city])
 
     for i in (-1, 0):
         for city in stack[i]:
             for j in range(stack[i][city]):
-                city_probs[city].append((i, 0.0))
+                inf_risk[city].append((i, 0.0))
 
     for city in c.cities:
-        for j in range(city.infection_cards, c.max_infection):
-            city_probs[city].append((-1, 0.0))
+        for j in range(city.infection_cards, max_inf):
+            inf_risk[city].append((-1, 0.0))
 
-    epi_probs = defaultdict(
+    epi_risk = defaultdict(
         float,
         {
             city: stack[max(stack)][city] / sum(stack[max(stack)].values())
@@ -291,8 +292,8 @@ def get_game_state(game, draw_phase=True):
         dict(
             name=city.name,
             color=city.color,
-            inf_risk=city_probs[city],
-            epi_risk=epi_probs[city],
+            inf_risk=inf_risk[city],
+            epi_risk=epi_risk[city],
         )
         for city in c.cities
     ]
@@ -307,7 +308,6 @@ def get_game_state(game, draw_phase=True):
         "epidemics": epidemics,
         "city_data": city_data,
         "stack": stack,
-        "max_infection": c.max_infection,
     }
 
 

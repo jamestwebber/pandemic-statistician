@@ -31,8 +31,6 @@ cities = [
     City("Tripoli", "black", 4, 3),
 ]
 
-max_infection = max(city.infection_cards for city in cities)
-
 
 @dataclass(frozen=True)
 class Character:

@@ -32,11 +32,11 @@
             <tr class="gs-header">
               <th rowspan="2">hidden</th>
               <th rowspan="2">City</th>
-              <th colspan="{{ game_state['max_infection'] }}">Infection Risk</th>
+              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">Infection Risk</th>
               <th rowspan="2">Epidemic</th>
             </tr>
             <tr class="gs-header">
-              {%- for i in range(game_state['max_infection']) %}
+              {%- for i in range( game_state['city_data'][0]['inf_risk']|length ) %}
                 <th>{{ i + 1 }}</th>
               {%- endfor %}
             </tr>

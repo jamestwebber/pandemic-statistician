@@ -4,12 +4,8 @@ from flask_wtf import FlaskForm
 
 from wtforms import (
     Form,
-    Field,
-    StringField,
     IntegerField,
-    BooleanField,
     SelectField,
-    RadioField,
     FieldList,
     FormField,
     SelectMultipleField,
@@ -20,7 +16,6 @@ from wtforms import (
 from wtforms.validators import InputRequired, NumberRange, AnyOf
 
 from .. import constants as c
-from ..models import Game, City, Turn
 
 from ..main import widgets as wdg
 
@@ -212,10 +207,11 @@ class InfectForm(SetupInfectForm):
         self._fields = order_fields(self._fields, self._order)
 
     def validate_cities(self, field):
-        if len(self.skip_infection.data) == c.num_players and len(field.data) > 0:
-            field.data = []
-            self.skip_infection.data = []
-            raise ValidationError("You shouldn't be infecting any cities")
+        if len(self.skip_infection.data) == c.num_players:
+            if len(field.data) > 0:
+                field.data = []
+                self.skip_infection.data = []
+                raise ValidationError("You shouldn't be infecting any cities")
         else:
             super(InfectForm, self).validate_cities(field)
 
