@@ -60,7 +60,7 @@ infection_glyphs = {
     2: "glyphicon glyphicon-exclamation-sign",
 }
 
-color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3} # for CSS styles
+color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 
 epidemics = 5  # number of epidemics in the deck
 num_players = 4  # four players, of course

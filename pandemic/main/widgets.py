@@ -125,7 +125,7 @@ def select_cities(field, **kwargs):
             html.append(
                 "</div><div {}>".format(
                     widgets.html_params(
-                        id=field_id, class_="row", data_toggle="buttons",
+                        id=field_id, class_="row", data_toggle="buttons"
                     )
                 )
             )
