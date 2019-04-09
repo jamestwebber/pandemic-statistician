@@ -119,7 +119,17 @@ def select_cities(field, **kwargs):
             widgets.html_params(id=field_id, class_="row", data_toggle="buttons")
         )
     ]
-    for value, city, checked in field.iter_choices():
+    stack_0 = 1
+    for value, (city, stack), checked in field.iter_choices():
+        if stack > stack_0:
+            html.append(
+                "</div><div {}>".format(
+                    widgets.html_params(
+                        id=field_id, class_="row", data_toggle="buttons",
+                    )
+                )
+            )
+            stack_0 = stack
         choice_id = f"{field_id}-{value}"
         options = dict(
             kwargs, name=field.name, value=value, id=choice_id, autocomplete="off"

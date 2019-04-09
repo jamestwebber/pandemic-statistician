@@ -162,7 +162,7 @@ class SetupInfectForm(FlaskForm):
         self.game.data = game_state["game_id"]
         self.epidemics = -1
         self.cities.choices = [
-            (city.name, city)
+            (city.name, (city, 1))
             for city in game_state["stack"][1]
             for _ in range(game_state["stack"][1][city])
         ]
@@ -194,7 +194,7 @@ class InfectForm(SetupInfectForm):
         choices = []
         for i in range(1, max(game_state["stack"]) + 1):
             choices.extend(
-                (city.name, city)
+                (city.name, (city, i))
                 for city in game_state["stack"][i]
                 for _ in range(game_state["stack"][i][city])
             )
