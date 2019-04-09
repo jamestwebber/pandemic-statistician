@@ -48,7 +48,7 @@ def to_glyph(v):
 
 @main.app_template_filter("color_i")
 def color_i(color):
-    return {"blue": 0, "yellow": 1, "black": 2, "red": 3}[color]
+    return c.color_codes[color]
 
 
 @main.route("/", methods=("GET", "POST"))
