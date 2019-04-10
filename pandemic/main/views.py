@@ -102,16 +102,7 @@ def draw(game_id=None):
     if turn is None:
         turn = Turn(game_id=game.id, turn_num=game.turn_num, resilient_pop=None)
         db.session.add(turn)
-    else:
-        # this could break the game state otherwise
-        turn.epidemic = []
-        for ci in turn.infections:
-            db.session.delete(ci)
-        turn.resilient_pop = None
-        turn.res_pop_count = None
-        turn.res_pop_epi = None
-
-    db.session.commit()
+        db.session.commit()
 
     game_state = get_game_state(game)
 
@@ -359,12 +350,10 @@ def replay(game_id, turn_num):
 
             turns = (
                 Turn.query.filter_by(game_id=game.id)
-                .filter(Turn.turn_num > turn_num)
+                .filter(Turn.turn_num >= turn_num)
                 .all()
             )
             for turn in turns:
-                for ci in turn.infections:
-                    db.session.delete(ci)
                 db.session.delete(turn)
 
             db.session.commit()

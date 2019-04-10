@@ -53,12 +53,6 @@ class Character(db.Model):
         return hash(self) == hash(other)
 
 
-draws = db.Table(
-    "draws",
-    db.Column("city_id", db.Integer, db.ForeignKey("cities.id"), primary_key=True),
-    db.Column("turn_id", db.Integer, db.ForeignKey("turns.id"), primary_key=True),
-)
-
 epidemics = db.Table(
     "epidemics",
     db.Column("city_id", db.Integer, db.ForeignKey("cities.id"), primary_key=True),
@@ -72,8 +66,18 @@ class CityInfection(db.Model):
     city_id = db.Column(db.Integer, db.ForeignKey("cities.id"), primary_key=True)
     count = db.Column(db.Integer, primary_key=True)
 
-    city = db.relationship("City", backref="infections", lazy=True)
-    turn = db.relationship("Turn", backref="infections", lazy=True)
+    city = db.relationship(
+        "City",
+        backref=db.backref("infections", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
+    turn = db.relationship(
+        "Turn",
+        backref=db.backref("infections", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
 
     def __repr__(self):
         return f"<{self.city.name} ({self.count})>"
@@ -85,8 +89,18 @@ class CityForecast(db.Model):
     city_id = db.Column(db.Integer, db.ForeignKey("cities.id"), primary_key=True)
     stack_order = db.Column(db.Integer, primary_key=True)
 
-    city = db.relationship("City", backref="forecasts", lazy=True)
-    turn = db.relationship("Turn", backref="forecasts", lazy=True)
+    city = db.relationship(
+        "City",
+        backref=db.backref("forecasts", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
+    turn = db.relationship(
+        "Turn",
+        backref=db.backref("forecasts", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
 
     def __repr__(self):
         return f"<{self.city.name} forecast to #{self.stack_order}>"

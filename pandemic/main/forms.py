@@ -236,7 +236,7 @@ class ResilientPopForm(FlaskForm):
         self.game.data = game_state["game_id"]
 
         self.resilient_cities.choices = [
-            (city.name, city)
+            (city.name, (city, r_stack))
             for city in game_state["stack"][r_stack]
             for _ in range(game_state["stack"][r_stack][city])
         ]
