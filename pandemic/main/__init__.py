@@ -206,8 +206,8 @@ def get_game_state(game, draw_phase=True):
                 stack[1][city] -= 1
                 stack[0][city] += 1
 
-    while sum(stack[1].values()) == 0:
-        stack = decrement_stack(stack)
+        while sum(stack[1].values()) == 0:
+            stack = decrement_stack(stack)
 
     stack = clean_stack(stack)
 
@@ -225,6 +225,7 @@ def get_game_state(game, draw_phase=True):
     if game.turn_num > -1:
         if i_block < epidemics:
             if j_block < epidemics:
+                assert i_block == j_block
                 # this epidemic has already been drawn
                 epidemic_risk = 0.0
             else:
@@ -232,7 +233,7 @@ def get_game_state(game, draw_phase=True):
                 # the second card could be one
                 epidemic_risk = 1.0 / epidemic_stacks[j_block]
             # next epidemic is in the next block somewhere
-            epidemic_in = epidemic_stacks[i_block] + epidemic_stacks[j_block]
+            epidemic_in = epidemic_stacks[i_block] + epidemic_stacks[i_block + 1]
         elif i_block == j_block:
             # both are same block, and it hasn't been drawn yet
             epidemic_risk = 2.0 / epidemic_stacks[i_block]
