@@ -1,0 +1,15 @@
+name: pandemic
+channels:
+  - defaults
+dependencies:
+  - pip
+  - python
+  - sqlalchemy
+  - pip:
+    - click
+    - flask
+    - flask-bootstrap
+    - flask-nav
+    - flask-sqlalchemy
+    - flask-wtf
+    - wtforms
