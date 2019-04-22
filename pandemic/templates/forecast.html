@@ -35,6 +35,10 @@
     placeholderClass: 'li border'
   });
 
+  let select_city = function() {
+    $('ol.js-item-grid > li > div.js-grid-target:not(:has(*)):first()').append($(this))
+  };
+
   let update_forecast = function() {
     $('ol.js-item-grid li').each(
       function(index) {
@@ -44,6 +48,7 @@
       });
   };
 
+  $('.btn-option').on("click", select_city);
   $('#submit')[0].addEventListener('mousedown', update_forecast);
 
   </script>

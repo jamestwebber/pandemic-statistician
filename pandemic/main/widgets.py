@@ -31,7 +31,7 @@ def city_list(cities):
     ]
 
     html.extend(
-        f'<div class="btn city-{city.color} col-xs-3"> {city.name}</div>'
+        f'<div class="btn city-{city.color} col-xs-3 btn-option"> {city.name}</div>'
         for city in cities
     )
     html.append("</div></div>")
