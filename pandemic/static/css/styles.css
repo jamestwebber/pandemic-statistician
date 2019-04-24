@@ -57,11 +57,7 @@ tr.gs-header > th {
   text-align: center;
 }
 
-td.infection-risk {
-  width: 20%;
-}
-
-td.epidemic-risk {
+td {
   width: 20%;
 }
 

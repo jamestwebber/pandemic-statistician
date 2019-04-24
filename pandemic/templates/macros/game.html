@@ -32,11 +32,15 @@
             <tr class="gs-header">
               <th rowspan="2">hidden</th>
               <th rowspan="2">City</th>
-              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">Infection Risk</th>
+              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">Infection</th>
               <th rowspan="2">Epidemic</th>
+              <th colspan="{{ game_state['city_data'][0]['epi_inf_risk']|length }}">Infection | Epidemic</th>
             </tr>
             <tr class="gs-header">
               {%- for i in range( game_state['city_data'][0]['inf_risk']|length ) %}
+                <th>{{ i + 1 }}</th>
+              {%- endfor %}
+              {%- for i in range( game_state['city_data'][0]['epi_inf_risk']|length ) %}
                 <th>{{ i + 1 }}</th>
               {%- endfor %}
             </tr>
@@ -47,7 +51,7 @@
               <td>{{ city['color'] | color_i }}</td>
               <td class="city-{{ city['color'] }}">{{ city['name'] }}</td>
               {%- for stack, inf_risk in city['inf_risk'] %}
-                <td class="infection-risk {{ inf_risk | danger_level }}"><span class="{{ stack | to_glyph }}"></span>  {{ inf_risk | to_percent }}</td>
+                <td class="infection-risk {{ inf_risk | danger_level }}">{{ inf_risk | to_percent(odds=False) }} <span class="{{ stack | to_glyph }}"></span></td>
               {%- endfor %}
               <td class="epidemic-risk {{ city['epi_risk'] | danger_level }}">
                 {% if city['epi_risk'] > 0.0 %}
@@ -56,6 +60,9 @@
                   <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                 {% endif %}
               </td>
+              {%- for epi_inf_risk in city['epi_inf_risk'] %}
+                <td class="epi-infection-risk {{ epi_inf_risk | danger_level }}">{{ epi_inf_risk | to_percent(odds=False) }}</td>
+              {%- endfor %}
             </tr>
           {%- endfor %}
           </tbody>
@@ -67,20 +74,33 @@
 
 
 {% macro game_state_scripts() %}
-  <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.18/datatables.min.js"></script>
+  <script type="text/javascript" src="//cdn.datatables.net/v/bs/dt-1.10.18/b-1.5.6/b-colvis-1.5.6/datatables.min.js"></script>
 
   <script>
     $(document).ready(function() {
       $('.city-table').DataTable( {
-        "paging":   false,
-        "searching":   false,
-        "info":     false,
-        "dom": 'rt',
-        "columnDefs": [
-          { "visible": false, "targets": [ 0 ] },
-          { "orderData": [ 0, 1 ], "targets": [ 1 ] }
+        paging:   false,
+        searching:   false,
+        info:     false,
+        dom: "rtB",
+        columnDefs: [
+          { visible: false, targets: [ 0, 6, 7, 8 ] },
+          { orderData: [ 0, 1 ], targets: [ 1 ] }
         ],
-        "stateSave": true
+        buttons: [
+          {
+              extend: 'colvisGroup',
+              text: 'Infection',
+              show: [2, 3, 4],
+              hide: [6, 7, 8]
+          },
+          {
+              extend: 'colvisGroup',
+              text: 'Epidemic',
+              show: [6, 7, 8],
+              hide: [2, 3, 4]
+          }
+        ]
       })
     })
 

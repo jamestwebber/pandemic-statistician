@@ -1,6 +1,5 @@
-import fractions
-
 from collections import Counter
+from fractions import Fraction
 
 from flask import session, render_template, redirect, url_for, flash
 
@@ -21,14 +20,15 @@ from . import main, forms
 
 
 @main.app_template_filter("to_percent")
-def to_percent(v):
-    return (
-        "{:.1f}% ({})".format(
-            v * 100.0, fractions.Fraction.from_float(v).limit_denominator()
+def to_percent(v, odds=True):
+    if odds:
+        return (
+            f"{v * 100.0:.1f}% ({Fraction.from_float(v).limit_denominator()})"
+            if v > 0
+            else ""
         )
-        if v > 0
-        else ""
-    )
+    else:
+        return f"{v * 100.0:.1f}%" if v > 0 else ""
 
 
 @main.app_template_filter("danger_level")
