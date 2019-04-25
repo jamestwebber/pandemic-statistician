@@ -21,9 +21,13 @@ cities = [
     City("Washington", "blue", 4, 3),
     City("San Francisco", "blue", 2, 2),
     City("Denver", "blue", 2, 2),
+    # City("Bogotá", "yellow", 2, 2),
+    City("Buenos Aires", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
     City("Lagos", "yellow", 4, 3),
+    # City("Lima", "yellow", 1, 1),
     City("São Paulo", "yellow", 4, 3),
+    # City("Santiago", "yellow", 1, 1),
     # City("Los Angeles", "yellow", 1, 1),
     # City("Mexico City", "yellow", 1, 1),
     City("Cairo", "black", 4, 3),
@@ -62,7 +66,8 @@ infection_glyphs = {
 
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 
-epidemics = 5  # number of epidemics in the deck
+# number of epidemics is based on the number of city cards in starting deck
+epidemics = {0: 5, 36: 6, 44: 7, 51: 8, 57: 9, 62: 10}
 num_players = 4  # four players, of course
 
 # number of hands in initial hands, according to NUM_PLAYERS
