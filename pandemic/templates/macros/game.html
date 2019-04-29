@@ -38,10 +38,10 @@
             </tr>
             <tr class="gs-header">
               {%- for i in range( game_state['city_data'][0]['inf_risk']|length ) %}
-                <th>{{ i + 1 }}</th>
+                <th class="infection-risk">{{ i + 1 }}</th>
               {%- endfor %}
               {%- for i in range( game_state['city_data'][0]['epi_inf_risk']|length ) %}
-                <th>{{ i + 1 }}</th>
+                <th class="epi-infection-risk">{{ i + 1 }}</th>
               {%- endfor %}
             </tr>
           </thead>
@@ -50,8 +50,8 @@
             <tr>
               <td>{{ city['color'] | color_i }}</td>
               <td class="city-{{ city['color'] }}">{{ city['name'] }}</td>
-              {%- for stack, inf_risk in city['inf_risk'] %}
-                <td class="infection-risk {{ inf_risk | danger_level }}">{{ inf_risk | to_percent(odds=False) }} <span class="{{ stack | to_glyph }}"></span></td>
+              {%- for inf_risk in city['inf_risk'] %}
+                <td class="{{ inf_risk | danger_level }}">{{ inf_risk | to_percent(odds=False) }}</td>
               {%- endfor %}
               <td class="epidemic-risk {{ city['epi_risk'] | danger_level }}">
                 {% if city['epi_risk'] > 0.0 %}
@@ -61,7 +61,7 @@
                 {% endif %}
               </td>
               {%- for epi_inf_risk in city['epi_inf_risk'] %}
-                <td class="epi-infection-risk {{ epi_inf_risk | danger_level }}">{{ epi_inf_risk | to_percent(odds=False) }}</td>
+                <td class="{{ epi_inf_risk | danger_level }}">{{ epi_inf_risk | to_percent(odds=False) }}</td>
               {%- endfor %}
             </tr>
           {%- endfor %}
@@ -84,21 +84,22 @@
         info:     false,
         dom: "rtB",
         columnDefs: [
-          { visible: false, targets: [ 0, 6, 7, 8 ] },
+          { visible: false, targets: [ 0 ] },
+          { visible: false, targets: 'epi-infection-risk' },
           { orderData: [ 0, 1 ], targets: [ 1 ] }
         ],
         buttons: [
           {
               extend: 'colvisGroup',
               text: 'Infection',
-              show: [2, 3, 4],
-              hide: [6, 7, 8]
+              show: '.infection-risk',
+              hide: '.epi-infection-risk'
           },
           {
               extend: 'colvisGroup',
               text: 'Epidemic',
-              show: [6, 7, 8],
-              hide: [2, 3, 4]
+              show: '.epi-infection-risk',
+              hide: '.infection-risk'
           }
         ]
       })

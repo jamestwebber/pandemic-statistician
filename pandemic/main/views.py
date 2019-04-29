@@ -21,14 +21,17 @@ from . import main, forms
 
 @main.app_template_filter("to_percent")
 def to_percent(v, odds=True):
-    if odds:
-        return (
-            f"{v * 100.0:.1f}% ({Fraction.from_float(v).limit_denominator()})"
-            if v > 0
-            else ""
-        )
+    if v > 0.01:
+        pct = f"{v * 100.0:.1f}%"
+    elif v > 0:
+        pct = f"{v * 100.0:.1g}%"
     else:
-        return f"{v * 100.0:.1f}%" if v > 0 else ""
+        return ""
+
+    if odds:
+        return f"{pct} ({Fraction.from_float(v).limit_denominator()})"
+    else:
+        return pct
 
 
 @main.app_template_filter("danger_level")
@@ -39,11 +42,6 @@ def danger_level(v):
         return "bg-warning"
     else:
         return ""
-
-
-@main.app_template_filter("to_glyph")
-def to_glyph(v):
-    return c.infection_glyphs.get(v, "glyphicon glyphicon-question-sign")
 
 
 @main.app_template_filter("color_i")

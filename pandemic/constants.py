@@ -36,6 +36,9 @@ cities = [
 ]
 
 
+max_inf = max(city.infection_cards for city in cities)
+
+
 @dataclass(frozen=True)
 class Character:
     name: str
@@ -56,13 +59,6 @@ characters = [
 
 infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
-
-infection_glyphs = {
-    -1: "glyphicon glyphicon-ban-circle",
-    0: "glyphicon glyphicon-remove",
-    1: "glyphicon glyphicon-warning-sign",
-    2: "glyphicon glyphicon-exclamation-sign",
-}
 
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 

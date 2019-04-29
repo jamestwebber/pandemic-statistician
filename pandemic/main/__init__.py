@@ -72,7 +72,65 @@ def ncr(n, r):
 
 
 def hg_pmf(k, M, n, N):
+    N = min(N, M)  # allows for infection rate > stack size
     return ncr(n, k) * ncr(M - n, N - k) / ncr(M, N)
+
+
+def inf_risks(stack, infection_rate, cond_p):
+    inf_risk = defaultdict(list)
+
+    for i in range(1, max(stack) + 1):
+        if infection_rate > 0:
+            stack_n = sum(stack[i].values())
+            for city in stack[i]:
+                inf_risk[city].extend(
+                    cond_p * hg_pmf(j, stack_n, stack[i][city], infection_rate)
+                    for j in range(1, stack[i][city] + 1)
+                )
+
+            infection_rate -= stack_n
+        else:
+            break
+
+    return inf_risk
+
+
+def trim_risk_dict(inf_risk, max_len):
+    for city in c.cities:
+        inf_risk[city].extend(0.0 for _ in range(len(inf_risk[city]), max_len))
+
+    return defaultdict(list, {city: inf_risk[city][:max_len] for city in inf_risk})
+
+
+def infection_risk(stack, infection_rate, p_no_epi):
+    inf_risk = inf_risks(stack, infection_rate, p_no_epi)
+
+    for i in (-1, 0):
+        for city in stack[i]:
+            inf_risk[city].extend(0.0 for _ in range(stack[i][city]))
+
+    return trim_risk_dict(inf_risk, min(infection_rate, c.max_inf))
+
+
+def epi_infection_risk(stack, infection_rate, p_epi, p_city_epi):
+    p_inf0 = lambda j, n, cs, ir: (
+        p_city_epi[c] * hg_pmf(j, n + 1, cs + 1, ir)
+        + (1 - p_city_epi[c]) * hg_pmf(j, n + 1, cs, ir)
+    )
+
+    inf_risk = defaultdict(list)
+
+    stack_n = sum(stack[0].values())
+    for city in stack[0]:
+        inf_risk[city].extend(
+            p_epi * p_inf0(j, stack_n, stack[0][city], infection_rate)
+            for j in range(1, stack[0][city] + 1)
+        )
+
+    for city, risks in inf_risks(stack, infection_rate - stack_n, p_epi).items():
+        inf_risk[city].extend(risks)
+
+    return trim_risk_dict(inf_risk, min(infection_rate, c.max_inf))
 
 
 def get_game_state(game, draw_phase=True):
@@ -83,10 +141,13 @@ def get_game_state(game, draw_phase=True):
         .all()
     )
 
+    city_cards = sum(city.player_cards for city in c.cities)
+    epidemic_cards = c.epidemics[min(k for k in c.epidemics if k > city_cards)]
+
     # deck size after dealing the initial hands
     post_setup_deck_size = (
-        sum(city.player_cards for city in c.cities)
-        + c.epidemics
+        city_cards
+        + epidemic_cards
         + game.funding_rate
         + game.extra_cards
         - c.num_players * c.initial_hand_size[c.num_players]
@@ -95,8 +156,10 @@ def get_game_state(game, draw_phase=True):
     # number of post-setup cards drawn so far
     if game.turn_num == -1:
         ps_cards_drawn = 0
+        epidemics = -1
     else:
         ps_cards_drawn = (len(turns) - 1 - draw_phase) * c.draw
+        epidemics = 0
 
     # how many cards are left
     deck_size = post_setup_deck_size - ps_cards_drawn
@@ -104,8 +167,6 @@ def get_game_state(game, draw_phase=True):
     stack = defaultdict(Counter)
     for city in c.cities:
         stack[1][city] = city.infection_cards
-
-    epidemics = 0
 
     if current_app.debug:
         print(f"----- TURN {len(turns) - 1} ---------", end="\n\n")
@@ -213,7 +274,7 @@ def get_game_state(game, draw_phase=True):
 
     print_stack(stack)
 
-    epidemic_stacks = Counter((i % c.epidemics) for i in range(post_setup_deck_size))
+    epidemic_stacks = Counter((i % epidemic_cards) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())
 
     i_block = epidemic_blocks[ps_cards_drawn]
@@ -249,38 +310,6 @@ def get_game_state(game, draw_phase=True):
         epidemic_risk = 0.0
         epidemic_in = epidemic_stacks[0]
 
-    infection_rate = c.infection_rates[epidemics]
-    max_inf = max(city.infection_cards for city in c.cities)
-
-    inf_risk = defaultdict(list)
-
-    for i in range(1, max(stack) + 1):
-        n = sum(stack[i].values())
-        if n <= infection_rate:
-            for city in stack[i]:
-                inf_risk[city].extend(((i, 1.0),) * stack[i][city])
-            infection_rate -= n
-        elif infection_rate > 0:
-            for city in stack[i]:
-                inf_risk[city].extend(
-                    (i, hg_pmf(j, n, stack[i][city], infection_rate))
-                    for j in range(1, stack[i][city] + 1)
-                )
-
-            infection_rate -= n
-        else:
-            for city in stack[i]:
-                inf_risk[city].extend(((i, 0.0),) * stack[i][city])
-
-    for i in (-1, 0):
-        for city in stack[i]:
-            for j in range(stack[i][city]):
-                inf_risk[city].append((i, 0.0))
-
-    for city in c.cities:
-        for j in range(city.infection_cards, max_inf):
-            inf_risk[city].append((-1, 0.0))
-
     epi_risk = defaultdict(
         float,
         {
@@ -289,22 +318,11 @@ def get_game_state(game, draw_phase=True):
         },
     )
 
-    epi_infection_rate = c.infection_rates[epidemics + 1]
-    epi_inf_risk = defaultdict(list)
+    inf_risk = infection_risk(stack, c.infection_rates[epidemics], 1.0 - epidemic_risk)
 
-    if epidemic_risk == 0.0:
-        for city in c.cities:
-            epi_inf_risk[city].extend((0.0,) * max_inf)
-    else:
-        n = sum(stack[0].values()) + 1
-        for city in stack[0]:
-            epi_inf_risk[city].extend(
-                epidemic_risk * hg_pmf(j, n, stack[0][city], epi_infection_rate)
-                for j in range(1, stack[0][city] + 1)
-            )
-        for city in c.cities:
-            for j in range(len(epi_inf_risk[city]), max_inf):
-                epi_inf_risk[city].append(0.0)
+    epi_inf_risk = epi_infection_risk(
+        stack, c.infection_rates[epidemics + 1], epidemic_risk, epi_risk
+    )
 
     city_data = [
         dict(
