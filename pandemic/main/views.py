@@ -178,8 +178,6 @@ def resilientpop(r_stack=0, also_forecast=0):
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        print(form.resilient_cities.data)
-
         this_turn.resilient_pop = City.query.filter(
             City.name.in_(form.resilient_cities.data)
         ).one()

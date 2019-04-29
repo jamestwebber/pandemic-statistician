@@ -80,4 +80,4 @@ def init_db():
 def initdb_command():
     """Initializes the database."""
     init_db()
-    print("Initialized the database.")
+    app.logger.info("Initialized the database.")

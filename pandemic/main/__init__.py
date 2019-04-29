@@ -14,12 +14,8 @@ main = Blueprint("main", __name__)
 
 def print_stack(stack):
     for i in sorted(stack):
-        print(
-            f"stack {i}:",
-            "\n\t".join(f"{city.name} ({stack[i][city]})" for city in stack[i]),
-            sep="\n\t",
-            end="\n\n",
-        )
+        stack_str = "\n\t".join(f"{city.name} ({stack[i][city]})" for city in stack[i])
+        current_app.logger.debug(f"\nstack {i}:\n\t{stack_str}\n\n")
 
 
 def clean_stack(stack):
@@ -168,21 +164,18 @@ def get_game_state(game, draw_phase=True):
     for city in c.cities:
         stack[1][city] = city.infection_cards
 
-    if current_app.debug:
-        print(f"----- TURN {len(turns) - 1} ---------", end="\n\n")
+    current_app.logger.debug(f"----- TURN {len(turns) - 1} ---------\n\n")
 
     for i, turn in enumerate(turns):
         stack = clean_stack(stack)
-        if current_app.debug:
-            print(f"on turn {turn.turn_num}:")
-            print_stack(stack)
+        current_app.logger.debug(f"\non turn {turn.turn_num}:")
+        print_stack(stack)
 
         if turn.epidemic and turn.resilient_pop:
-            if current_app.debug:
-                print(
-                    f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})",
-                    f"\nepidemic: {', '.join(map(str, turn.epidemic))}",
-                )
+            current_app.logger.debug(
+                f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})"
+            )
+            current_app.logger.debug(f"epidemic: {', '.join(map(str, turn.epidemic))}")
 
             epidemics += 1
             stack = epidemic(stack, turn.epidemic[0])
@@ -204,25 +197,23 @@ def get_game_state(game, draw_phase=True):
                 stack = increment_stack(stack)
 
         elif turn.resilient_pop:
-            if current_app.debug:
-                print(f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})")
+            current_app.logger.debug(
+                f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})"
+            )
             stack[0][turn.resilient_pop] -= turn.res_pop_count
             stack[-1][turn.resilient_pop] += turn.res_pop_count
 
             stack = clean_stack(stack)
         elif turn.epidemic:
-            if current_app.debug:
-                print(f"epidemic: {', '.join(map(str, turn.epidemic))}")
+            current_app.logger.debug(f"epidemic: {', '.join(map(str, turn.epidemic))}")
             epidemics += 1
             stack = increment_stack(epidemic(stack, turn.epidemic[0]))
 
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack = increment_stack(epidemic(stack, turn.epidemic[1]))
-
         if turn.forecasts:
-            if current_app.debug:
-                print("forecast")
+            current_app.logger.debug("forecast")
 
             new_stack = defaultdict(Counter, {0: stack[0], -1: stack[-1]})
             for cf in turn.forecasts:
@@ -234,20 +225,15 @@ def get_game_state(game, draw_phase=True):
                 new_stack[j + 8] = stack[j]
 
             stack = new_stack
-            if current_app.debug:
-                print_stack(stack)
+            print_stack(stack)
 
         stack = clean_stack(stack)
 
         infected_cities = Counter({ci.city: ci.count for ci in turn.infections})
 
-        if current_app.debug:
-            print(
-                "infected:\n\t{}".format(
-                    "\n\t".join(city.name for city in infected_cities.elements())
-                ),
-                end="\n\n",
-            )
+        current_app.logger.debug(
+            f"infected:\t{', '.join(city.name for city in infected_cities.elements())}"
+        )
 
         while sum(infected_cities.values()):
             while sum(stack[1].values()) == 0:
