@@ -1,11 +1,9 @@
-import functools
-import math
-import operator as op
 from collections import defaultdict, Counter
 
 from flask import Blueprint, flash, current_app
 
 from pandemic import constants as c
+from pandemic.main.stats import infection_risk, epi_infection_risk
 from pandemic.models import Turn
 
 
@@ -19,31 +17,22 @@ def print_stack(stack):
 
 
 def clean_stack(stack):
-    stack = defaultdict(
+    return defaultdict(
         Counter,
-        {i: Counter(stack[i].elements()) for i in stack if sum(stack[i].values()) > 0},
+        {i: ct for i, ct in ((i, Counter(stack[i].elements())) for i in stack) if ct},
     )
-
-    return stack
 
 
 def increment_stack(stack):
-    new_stack = defaultdict(
-        Counter, {(i + 1): Counter(stack[i].elements()) for i in stack if i > -1}
+    return defaultdict(
+        Counter, {(i + (i >= 0) * 1): Counter(stack[i].elements()) for i in stack}
     )
-    new_stack[-1] = stack[-1]
-
-    return clean_stack(new_stack)
 
 
 def decrement_stack(stack):
-    new_stack = defaultdict(
-        Counter, {(i - 1): Counter(stack[i].elements()) for i in stack if i > 0}
+    return defaultdict(
+        Counter, {(i - (i > 0) * 1): Counter(stack[i].elements()) for i in stack}
     )
-    new_stack[-1] = stack[-1]
-    new_stack[0] = stack[0]
-
-    return clean_stack(new_stack)
 
 
 def epidemic(stack, epidemic_city):
@@ -54,79 +43,6 @@ def epidemic(stack, epidemic_city):
         stack[0][epidemic_city] += 1
 
     return clean_stack(stack)
-
-
-def ncr(n, r):
-    r = min(r, n - r)
-    if r < 0:
-        return 0.0
-
-    numer = functools.reduce(op.mul, range(n, n - r, -1), 1)
-    denom = math.factorial(r)
-
-    return numer / denom
-
-
-def hg_pmf(k, M, n, N):
-    N = min(N, M)  # allows for infection rate > stack size
-    return ncr(n, k) * ncr(M - n, N - k) / ncr(M, N)
-
-
-def inf_risks(stack, infection_rate, cond_p):
-    inf_risk = defaultdict(list)
-
-    for i in range(1, max(stack) + 1):
-        if infection_rate > 0:
-            stack_n = sum(stack[i].values())
-            for city in stack[i]:
-                inf_risk[city].extend(
-                    cond_p * hg_pmf(j, stack_n, stack[i][city], infection_rate)
-                    for j in range(1, stack[i][city] + 1)
-                )
-
-            infection_rate -= stack_n
-        else:
-            break
-
-    return inf_risk
-
-
-def trim_risk_dict(inf_risk, max_len):
-    for city in c.cities:
-        inf_risk[city].extend(0.0 for _ in range(len(inf_risk[city]), max_len))
-
-    return defaultdict(list, {city: inf_risk[city][:max_len] for city in inf_risk})
-
-
-def infection_risk(stack, infection_rate, p_no_epi):
-    inf_risk = inf_risks(stack, infection_rate, p_no_epi)
-
-    for i in (-1, 0):
-        for city in stack[i]:
-            inf_risk[city].extend(0.0 for _ in range(stack[i][city]))
-
-    return trim_risk_dict(inf_risk, min(infection_rate, c.max_inf))
-
-
-def epi_infection_risk(stack, infection_rate, p_epi, p_city_epi):
-    p_inf0 = lambda j, n, cs, ir: (
-        p_city_epi[c] * hg_pmf(j, n + 1, cs + 1, ir)
-        + (1 - p_city_epi[c]) * hg_pmf(j, n + 1, cs, ir)
-    )
-
-    inf_risk = defaultdict(list)
-
-    stack_n = sum(stack[0].values())
-    for city in stack[0]:
-        inf_risk[city].extend(
-            p_epi * p_inf0(j, stack_n, stack[0][city], infection_rate)
-            for j in range(1, stack[0][city] + 1)
-        )
-
-    for city, risks in inf_risks(stack, infection_rate - stack_n, p_epi).items():
-        inf_risk[city].extend(risks)
-
-    return trim_risk_dict(inf_risk, min(infection_rate, c.max_inf))
 
 
 def get_game_state(game, draw_phase=True):
@@ -195,7 +111,6 @@ def get_game_state(game, draw_phase=True):
                     stack[-1][turn.resilient_pop] += turn.res_pop_count
 
                 stack = increment_stack(stack)
-
         elif turn.resilient_pop:
             current_app.logger.debug(
                 f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})"
@@ -212,6 +127,7 @@ def get_game_state(game, draw_phase=True):
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack = increment_stack(epidemic(stack, turn.epidemic[1]))
+
         if turn.forecasts:
             current_app.logger.debug("forecast")
 
