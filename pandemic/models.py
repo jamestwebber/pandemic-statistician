@@ -60,6 +60,29 @@ epidemics = db.Table(
 )
 
 
+class CityExile(db.Model):
+    __tablename__ = "exiled_cities"
+    turn_id = db.Column(db.Integer, db.ForeignKey("turns.id"), primary_key=True)
+    city_id = db.Column(db.Integer, db.ForeignKey("cities.id"), primary_key=True)
+    count = db.Column(db.Integer, primary_key=True)
+
+    city = db.relationship(
+        "City",
+        backref=db.backref("exiled", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
+    turn = db.relationship(
+        "Turn",
+        backref=db.backref("exiled", cascade="all, delete-orphan"),
+        lazy=True,
+        viewonly=True,
+    )
+
+    def __repr__(self):
+        return f"<{self.city.name} ({self.count})>"
+
+
 class CityInfection(db.Model):
     __tablename__ = "infections"
     turn_id = db.Column(db.Integer, db.ForeignKey("turns.id"), primary_key=True)
@@ -136,14 +159,6 @@ class Turn(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     turn_num = db.Column(db.Integer)  # which turn this is
     game_id = db.Column(db.Integer, db.ForeignKey("games.id"), nullable=False)
-
-    # turns when a city was exiled using resilient population (one-to-many)
-    res_pop_id = db.Column(db.Integer, db.ForeignKey("cities.id"), nullable=True)
-    # number of cities exiled (1 or 2)
-    res_pop_count = db.Column(db.Integer, nullable=True)
-    # if played during epidemic(s), which epidemic it was played on
-    res_pop_epi = db.Column(db.Integer, nullable=True)
-    resilient_pop = db.relationship("City", lazy=True, backref="resilient_pops")
 
     def __repr__(self):
         return "<Turn {}: {} infected>".format(

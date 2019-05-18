@@ -24,8 +24,14 @@ def order_fields(fields, order):
     return OrderedDict((k, fields[k]) for k in order)
 
 
-def validate_auth(field):
+def auth_valid(field):
     return bool(field and len(field.data) == c.num_players)
+
+
+def validate_auth(field, field_name):
+    if 0 < len(field.data) < c.num_players:
+        field.data = []
+        raise ValidationError(f"All players must authorize {field_name}")
 
 
 class PlayerField(Form):
@@ -78,13 +84,13 @@ class DrawForm(FlaskForm):
         widget=wdg.authorization,
         description="Authorize Resilient Population",
     )
-    second_resilient_population = SelectMultipleField(
-        "Resilient Population (2nd Epidemic)",
-        widget=wdg.authorization,
-        description="Authorize Resilient Population during second epidemic",
-    )
     city_forecast = SelectMultipleField(
         "City Forecast", widget=wdg.authorization, description="Authorize City Forecast"
+    )
+    lockdown = SelectMultipleField(
+        "Lockdown",
+        widget=wdg.authorization,
+        description="Authorize City Lockdown",
     )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
@@ -98,17 +104,13 @@ class DrawForm(FlaskForm):
 
         if self.turn_num == -1:
             del self.resilient_population
-            del self.second_resilient_population
             del self.city_forecast
+            del self.lockdown
         else:
             character_list = [(ch.character.name, ch) for ch in characters]
             self.resilient_population.choices = character_list[:]
             self.city_forecast.choices = character_list[:]
-
-            if game_state["epi_risk"] > 1.0:
-                self.second_resilient_population.choices = character_list[:]
-            else:
-                del self.second_resilient_population
+            self.lockdown.choices = character_list[:]
 
         if game_state["epi_risk"] == 0.0 or self.turn_num == -1:
             del self.epidemic
@@ -126,21 +128,13 @@ class DrawForm(FlaskForm):
                 del self.second_epidemic
 
     def validate_resilient_population(self, field):
-        if 0 < len(field.data) < c.num_players:
-            field.data = []
-            raise ValidationError("All players must authorize Resilient Population")
-
-    def validate_second_resilient_population(self, field):
-        if 0 < len(field.data) < c.num_players:
-            field.data = []
-            raise ValidationError("All players must authorize Resilient Population")
-        if len(field.data) > 0 and not self.second_epidemic.data:
-            raise ValidationError("There wasn't a second epidemic during this turn")
+        validate_auth(field, "Resilient Population")
 
     def validate_city_forecast(self, field):
-        if 0 < len(field.data) < c.num_players:
-            field.data = []
-            raise ValidationError("All players must authorize City Forecast")
+        validate_auth(field, "City Forecast")
+
+    def validate_lockdown(self, field):
+        validate_auth(field, "Lockdown")
 
     def validate_second_epidemic(self, field):
         if field.data and not self.epidemic.data:
@@ -216,38 +210,44 @@ class InfectForm(SetupInfectForm):
             super(InfectForm, self).validate_cities(field)
 
     def validate_skip_infection(self, field):
-        if 0 < len(field.data) < c.num_players:
-            field.data = []
-            raise ValidationError("All players must authorize this decision")
+        validate_auth(field, "One Quiet Night")
 
 
-class ResilientPopForm(FlaskForm):
-    resilient_cities = SelectMultipleField(
+class RemoveCityForm(FlaskForm):
+    cities = SelectMultipleField(
         "Resilient Cities",
         widget=wdg.select_cities,
-        description="Select the city chosen for resiliency (up to 2 copies)",
+        description="Select resilient pop (up to 2 copies) and/or lockdown cities",
     )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
 
-    def __init__(self, game_state, r_stack, *args, **kwargs):
-        super(ResilientPopForm, self).__init__(*args, **kwargs)
+    def __init__(self, game_state, max_s, n_cities, *args, **kwargs):
+        super(RemoveCityForm, self).__init__(*args, **kwargs)
 
         self.game.data = game_state["game_id"]
+        self.n_cities = n_cities
 
-        self.resilient_cities.choices = [
-            (city.name, (city, r_stack))
-            for city in game_state["stack"][r_stack]
-            for _ in range(game_state["stack"][r_stack][city])
+        self.cities.choices = [
+            (city.name, (city, i))
+            for i in range(0, max_s + 1)
+            for city in game_state["stack"][i]
+            for _ in range(game_state["stack"][i][city])
         ]
 
-    def validate_resilient_cities(self, field):
-        if len(field.data) not in (1, 2):
+    def validate_cities(self, field):
+        if not (0 < len(field.data) < self.n_cities + 2):
             field.data = []
-            raise ValidationError("You must pick one or two city cards")
-        elif len(field.data) == 2 and field.data[0] != field.data[1]:
+            raise ValidationError(
+                "You must pick {} city cards".format(
+                    "one or two" if self.n_cities == 1 else "two or three"
+                )
+            )
+        elif len(set(field.data)) > self.n_cities:
             field.data = []
-            raise ValidationError("The two cards must be for the same city")
+            raise ValidationError(
+                f"You can remove at most {self.n_cities} different cities"
+            )
 
 
 class ForecastForm(FlaskForm):
@@ -293,6 +293,4 @@ class ReplayForm(FlaskForm):
         self.game.data = game_id
 
     def validate_authorize(self, field):
-        if 0 < len(field.data) < c.num_players:
-            field.data = []
-            raise ValidationError("All players must authorize this decision")
+        validate_auth(field, "a replay")

@@ -28,7 +28,7 @@ cities = [
     # City("Lima", "yellow", 1, 1),
     City("São Paulo", "yellow", 4, 3),
     # City("Santiago", "yellow", 1, 1),
-    # City("Los Angeles", "yellow", 1, 1),
+    City("Los Angeles", "yellow", 1, 1),
     # City("Mexico City", "yellow", 1, 1),
     City("Cairo", "black", 4, 3),
     City("Istanbul", "black", 4, 3),

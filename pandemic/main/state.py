@@ -7,7 +7,7 @@ from pandemic.main.risk import epi_infection_risk, infection_risk
 from pandemic.models import Turn
 
 
-def print_stack(stack):
+def log_stack(stack):
     for i in sorted(stack):
         stack_str = "\n\t".join(f"{city.name} ({stack[i][city]})" for city in stack[i])
         current_app.logger.debug(f"\nstack {i}:\n\t{stack_str}\n\n")
@@ -27,9 +27,11 @@ def increment_stack(stack):
 
 
 def decrement_stack(stack):
-    return defaultdict(
-        Counter, {(i - (i > 0) * 1): Counter(stack[i].elements()) for i in stack}
-    )
+    new_stack = defaultdict(Counter)
+    for i in stack:
+        new_stack[i - (i > 0) * 1] += stack[i]
+
+    return new_stack
 
 
 def epidemic(stack, epidemic_city):
@@ -82,41 +84,9 @@ def get_game_state(game, draw_phase=True):
     for i, turn in enumerate(turns):
         stack = clean_stack(stack)
         current_app.logger.debug(f"\non turn {turn.turn_num}:")
-        print_stack(stack)
+        log_stack(stack)
 
-        if turn.epidemic and turn.resilient_pop:
-            current_app.logger.debug(
-                f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})"
-            )
-            current_app.logger.debug(f"epidemic: {', '.join(map(str, turn.epidemic))}")
-
-            epidemics += 1
-            stack = epidemic(stack, turn.epidemic[0])
-
-            if turn.res_pop_epi == 1:
-                stack[0][turn.resilient_pop] -= turn.res_pop_count
-                stack[-1][turn.resilient_pop] += turn.res_pop_count
-
-            stack = increment_stack(stack)
-
-            if len(turn.epidemic) == 2:
-                epidemics += 1
-                stack = epidemic(stack, turn.epidemic[1])
-
-                if turn.res_pop_epi == 2:
-                    stack[0][turn.resilient_pop] -= turn.res_pop_count
-                    stack[-1][turn.resilient_pop] += turn.res_pop_count
-
-                stack = increment_stack(stack)
-        elif turn.resilient_pop:
-            current_app.logger.debug(
-                f"resilient pop:\t{turn.resilient_pop} ({turn.res_pop_count})"
-            )
-            stack[0][turn.resilient_pop] -= turn.res_pop_count
-            stack[-1][turn.resilient_pop] += turn.res_pop_count
-
-            stack = clean_stack(stack)
-        elif turn.epidemic:
+        if turn.epidemic:
             current_app.logger.debug(f"epidemic: {', '.join(map(str, turn.epidemic))}")
             epidemics += 1
             stack = increment_stack(epidemic(stack, turn.epidemic[0]))
@@ -124,6 +94,25 @@ def get_game_state(game, draw_phase=True):
             if len(turn.epidemic) == 2:
                 epidemics += 1
                 stack = increment_stack(epidemic(stack, turn.epidemic[1]))
+
+        if turn.exiled:
+            for city_exile in turn.exiled:
+                current_app.logger.debug(
+                    f"city exiled:\t{city_exile.city} ({city_exile.count})"
+                )
+
+                exile_count = city_exile.count
+
+                for j in range(0, 1 + len(turn.epidemic)):
+                    stack_count = min(exile_count, stack[j][city_exile.city])
+                    stack[j][city_exile.city] -= stack_count
+                    exile_count -= stack_count
+                    if exile_count <= 0:
+                        break
+                else:
+                    flash("WARNING: Couldn't find cities in stack 0 to exile")
+
+                stack[-1][city_exile.city] += city_exile.count
 
         if turn.forecasts:
             current_app.logger.debug("forecast")
@@ -138,7 +127,7 @@ def get_game_state(game, draw_phase=True):
                 new_stack[j + 8] = stack[j]
 
             stack = new_stack
-            print_stack(stack)
+            log_stack(stack)
 
         stack = clean_stack(stack)
 
@@ -171,7 +160,7 @@ def get_game_state(game, draw_phase=True):
 
     stack = clean_stack(stack)
 
-    print_stack(stack)
+    log_stack(stack)
 
     epidemic_stacks = Counter((i % epidemic_cards) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())

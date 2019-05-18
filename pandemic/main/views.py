@@ -9,6 +9,7 @@ from pandemic.main.state import get_game_state
 from pandemic.models import (
     Character,
     City,
+    CityExile,
     CityForecast,
     CityInfection,
     Game,
@@ -96,7 +97,7 @@ def draw(game_id=None):
 
     turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
     if turn is None:
-        turn = Turn(game_id=game.id, turn_num=game.turn_num, resilient_pop=None)
+        turn = Turn(game_id=game.id, turn_num=game.turn_num)
         db.session.add(turn)
         db.session.commit()
 
@@ -111,30 +112,31 @@ def draw(game_id=None):
                 turn.epidemic.append(
                     City.query.filter_by(name=form.second_epidemic.data).one()
                 )
-                res_s = 2
+                max_s = 2
             else:
-                res_s = 1
+                max_s = 1
         else:
-            res_s = 0
+            max_s = 0
 
-        do_res_pop = forms.validate_auth(form.resilient_population)
+        n_cities = (
+            int(forms.auth_valid(form.resilient_population))
+            + int(forms.auth_valid(form.lockdown))
+        )
 
-        if forms.validate_auth(form.second_resilient_population):
-            # only possible if there are two epidemics
-            do_res_pop = True
-            res_s = 1
-
-        do_forecast = forms.validate_auth(form.city_forecast)
+        do_forecast = forms.auth_valid(form.city_forecast)
 
         db.session.commit()
 
-        if do_res_pop:
-            # if res pop was played, we look at stack 0 (if no epidemics), 1 (if one),
-            # or 2 (if res_pop was played on the first of two)
-            # if there were two epidemics and res pop was played on the second,
-            # we look at stack 1 for the city (there will only be one)
+        if n_cities > 0:
+            # less precise but easier to code version: show all the cities up to
+            # the max stack, and rely on players to make correct selections (...)
             return redirect(
-                url_for(".resilientpop", r_stack=res_s, also_forecast=int(do_forecast))
+                url_for(
+                    ".removecity",
+                    max_stack=max_s,
+                    n_cities=n_cities,
+                    also_forecast=int(do_forecast),
+                )
             )
         elif do_forecast:
             return redirect(url_for(".forecast"))
@@ -146,9 +148,11 @@ def draw(game_id=None):
     )
 
 
-@main.route("/resilientpop/<int:r_stack>", methods=("GET", "POST"))
-@main.route("/resilientpop/<int:r_stack>/<int:also_forecast>", methods=("GET", "POST"))
-def resilientpop(r_stack=0, also_forecast=0):
+@main.route(
+    "/removecity/<int:max_stack>/<int:n_cities>/<int:also_forecast>",
+    methods=("GET", "POST"),
+)
+def removecity(max_stack=0, n_cities=1, also_forecast=0):
     if session.get("game_id", None) is None:
         flash("No game in progress", "error")
         return redirect(url_for(".begin"))
@@ -169,23 +173,25 @@ def resilientpop(r_stack=0, also_forecast=0):
 
     game_state = get_game_state(game)
 
-    form = forms.ResilientPopForm(game_state, r_stack)
+    form = forms.RemoveCityForm(game_state, max_stack, n_cities)
 
     if form.validate_on_submit():
         if form.game.data != game_id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        this_turn.resilient_pop = City.query.filter(
-            City.name.in_(form.resilient_cities.data)
-        ).one()
-        this_turn.res_pop_count = len(form.resilient_cities.data)
-        if len(this_turn.epidemic) == 1:
-            this_turn.res_pop_epi = 1
-        elif len(this_turn.epidemic) == 2:
-            this_turn.res_pop_epi = 3 - r_stack
-        else:
-            this_turn.res_pop_epi = 0
+        removed_cities = Counter(form.cities.data)
+
+        for city_name in removed_cities:
+            city = City.query.filter_by(name=city_name).one()
+            ci = CityExile(
+                city_id=city.id,
+                turn_id=this_turn.id,
+                turn=this_turn,
+                city=city,
+                count=removed_cities[city_name],
+            )
+            this_turn.exiled.append(ci)
 
         db.session.commit()
 
@@ -196,7 +202,7 @@ def resilientpop(r_stack=0, also_forecast=0):
 
     return render_template(
         "base_form.html",
-        title="Select Resilient City",
+        title="Remove Cities",
         game_state=game_state,
         form=form,
     )
@@ -338,7 +344,7 @@ def replay(game_id, turn_num):
     form = forms.ReplayForm(game_id, game.characters)
 
     if form.validate_on_submit():
-        if forms.validate_auth(form.authorize):
+        if forms.auth_valid(form.authorize):
             session["game_id"] = game_id
             game.turn_num = turn_num
 
