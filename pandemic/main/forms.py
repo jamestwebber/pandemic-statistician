@@ -74,9 +74,7 @@ class BeginForm(FlaskForm):
 
 class DrawForm(FlaskForm):
     exile_cities = SelectMultipleField(
-        "Exile Cities",
-        widget=wdg.select_cities,
-        description="City cards sent to box 6",
+        "Exile Cities", widget=wdg.select_cities, description="City cards sent to box 6"
     )
     epidemic = SelectField(
         "Epidemic", description="If an epidemic was drawn, select the city affected"
