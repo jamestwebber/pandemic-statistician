@@ -73,6 +73,11 @@ class BeginForm(FlaskForm):
 
 
 class DrawForm(FlaskForm):
+    exile_cities = SelectMultipleField(
+        "Exile Cities",
+        widget=wdg.select_cities,
+        description="City cards sent to box 6",
+    )
     epidemic = SelectField(
         "Epidemic", description="If an epidemic was drawn, select the city affected"
     )
@@ -88,9 +93,7 @@ class DrawForm(FlaskForm):
         "City Forecast", widget=wdg.authorization, description="Authorize City Forecast"
     )
     lockdown = SelectMultipleField(
-        "Lockdown",
-        widget=wdg.authorization,
-        description="Authorize City Lockdown",
+        "Lockdown", widget=wdg.authorization, description="Authorize City Lockdown"
     )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
@@ -103,6 +106,7 @@ class DrawForm(FlaskForm):
         self.turn_num = game_state["turn_num"]
 
         if self.turn_num == -1:
+            del self.exile_cities
             del self.resilient_population
             del self.city_forecast
             del self.lockdown
@@ -111,6 +115,12 @@ class DrawForm(FlaskForm):
             self.resilient_population.choices = character_list[:]
             self.city_forecast.choices = character_list[:]
             self.lockdown.choices = character_list[:]
+
+            self.exile_cities.choices = [
+                (city.name, (city, 0))
+                for city in game_state["stack"][0]
+                for _ in range(game_state["stack"][0][city])
+            ]
 
         if game_state["epi_risk"] == 0.0 or self.turn_num == -1:
             del self.epidemic

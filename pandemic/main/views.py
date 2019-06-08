@@ -95,10 +95,12 @@ def draw(game_id=None):
         session["game_id"] = None
         return redirect(url_for(".begin"))
 
-    turn = Turn.query.filter_by(game_id=game.id, turn_num=game.turn_num).one_or_none()
-    if turn is None:
-        turn = Turn(game_id=game.id, turn_num=game.turn_num)
-        db.session.add(turn)
+    this_turn = Turn.query.filter_by(
+        game_id=game.id, turn_num=game.turn_num
+    ).one_or_none()
+    if this_turn is None:
+        this_turn = Turn(game_id=game.id, turn_num=game.turn_num)
+        db.session.add(this_turn)
         db.session.commit()
 
     game_state = get_game_state(game)
@@ -106,10 +108,24 @@ def draw(game_id=None):
     form = forms.DrawForm(game_state, game.characters)
 
     if form.validate_on_submit():
+        if form.exile_cities and form.exile_cities.data:
+            removed_cities = Counter(form.exile_cities.data)
+
+            for city_name in removed_cities:
+                city = City.query.filter_by(name=city_name).one()
+                ci = CityExile(
+                    city_id=city.id,
+                    turn_id=this_turn.id,
+                    turn=this_turn,
+                    city=city,
+                    count=removed_cities[city_name],
+                )
+                this_turn.exiled.append(ci)
+
         if form.epidemic and form.epidemic.data:
-            turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
+            this_turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
             if form.second_epidemic and form.second_epidemic.data:
-                turn.epidemic.append(
+                this_turn.epidemic.append(
                     City.query.filter_by(name=form.second_epidemic.data).one()
                 )
                 max_s = 2
@@ -118,9 +134,8 @@ def draw(game_id=None):
         else:
             max_s = 0
 
-        n_cities = (
-            int(forms.auth_valid(form.resilient_population))
-            + int(forms.auth_valid(form.lockdown))
+        n_cities = int(forms.auth_valid(form.resilient_population)) + int(
+            forms.auth_valid(form.lockdown)
         )
 
         do_forecast = forms.auth_valid(form.city_forecast)
@@ -201,10 +216,7 @@ def removecity(max_stack=0, n_cities=1, also_forecast=0):
             return redirect(url_for(".infect"))
 
     return render_template(
-        "base_form.html",
-        title="Remove Cities",
-        game_state=game_state,
-        form=form,
+        "base_form.html", title="Remove Cities", game_state=game_state, form=form
     )
 
 
