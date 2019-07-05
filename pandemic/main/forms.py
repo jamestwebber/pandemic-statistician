@@ -21,7 +21,7 @@ from ..main import widgets as wdg
 
 
 def order_fields(fields, order):
-    return OrderedDict((k, fields[k]) for k in order)
+    return OrderedDict((k, fields[k]) for k in order if k in fields)
 
 
 def auth_valid(field):
@@ -110,8 +110,14 @@ class DrawForm(FlaskForm):
             del self.lockdown
         else:
             character_list = [(ch.character.name, ch) for ch in characters]
-            self.resilient_population.choices = character_list[:]
-            self.city_forecast.choices = character_list[:]
+
+            if game_state["funding"] > 0:
+                self.resilient_population.choices = character_list[:]
+                self.city_forecast.choices = character_list[:]
+            else:
+                del self.resilient_population
+                del self.city_forecast
+
             self.lockdown.choices = character_list[:]
 
             self.exile_cities.choices = [
@@ -191,7 +197,10 @@ class InfectForm(SetupInfectForm):
         self.epidemics = game_state["epidemics"]
 
         self.cities.description = "Cities infected this turn"
-        self.skip_infection.choices = [(ch.character.name, ch) for ch in characters]
+        if game_state["funding"] > 0:
+            self.skip_infection.choices = [(ch.character.name, ch) for ch in characters]
+        else:
+            del self.skip_infection
 
         choices = []
         for i in range(1, max(game_state["stack"]) + 1):
@@ -209,7 +218,7 @@ class InfectForm(SetupInfectForm):
         self._fields = order_fields(self._fields, self._order)
 
     def validate_cities(self, field):
-        if len(self.skip_infection.data) == c.num_players:
+        if auth_valid(self.skip_infection):
             if len(field.data) > 0:
                 field.data = []
                 self.skip_infection.data = []

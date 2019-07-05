@@ -226,6 +226,7 @@ def get_game_state(game, draw_phase=True):
     return {
         "game_id": game.id,
         "turn_num": game.turn_num,
+        "funding": game.funding_rate,
         "turns": turns,
         "deck_size": deck_size,
         "epi_risk": epidemic_risk,
