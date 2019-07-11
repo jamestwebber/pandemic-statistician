@@ -136,6 +136,7 @@ class City(db.Model):
     color = db.Column(db.String(32), nullable=False)  # (original) color of the city
     player_cards = db.Column(db.Integer, nullable=False)  # cards in player deck
     infection_cards = db.Column(db.Integer, nullable=False)  # cards in infection deck
+    in_box_6 = db.Column(db.Integer, nullable=False)  # infection cards in box 6 exile
 
     # turns when this city was drawn as an epidemic (many-to-one)
     epidemics = db.relationship(
@@ -147,7 +148,13 @@ class City(db.Model):
 
     def __hash__(self):
         return hash(
-            c.City(self.name, self.color, self.player_cards, self.infection_cards)
+            c.City(
+                self.name,
+                self.color,
+                self.player_cards,
+                self.infection_cards,
+                self.in_box_6,
+            )
         )
 
     def __eq__(self, other):

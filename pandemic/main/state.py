@@ -77,7 +77,10 @@ def get_game_state(game, draw_phase=True):
 
     stack = defaultdict(Counter)
     for city in c.cities:
-        stack[1][city] = city.infection_cards
+        stack[1][city] = city.infection_cards - city.in_box_6
+        stack[-1][city] = city.in_box_6
+
+    current_app.logger.debug(f"City cards in starting deck: {city_cards}\n")
 
     current_app.logger.debug(f"----- TURN {len(turns) - 1} ---------\n\n")
 

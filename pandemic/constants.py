@@ -11,28 +11,33 @@ class City:
     color: str
     player_cards: int
     infection_cards: int
+    in_box_6: int
 
 
 cities = [
-    City("Atlanta", "blue", 1, 1),
-    City("Chicago", "blue", 2, 2),
-    City("London", "blue", 4, 3),
-    City("New York", "blue", 4, 3),
-    City("Washington", "blue", 4, 3),
-    City("San Francisco", "blue", 2, 2),
-    City("Denver", "blue", 2, 2),
-    # City("Bogotá", "yellow", 2, 2),
-    City("Buenos Aires", "yellow", 2, 2),
-    City("Jacksonville", "yellow", 4, 3),
-    City("Lagos", "yellow", 4, 3),
-    # City("Lima", "yellow", 1, 1),
-    City("São Paulo", "yellow", 4, 3),
-    # City("Santiago", "yellow", 1, 1),
-    City("Los Angeles", "yellow", 1, 1),
-    # City("Mexico City", "yellow", 1, 1),
-    City("Cairo", "black", 4, 3),
-    City("Istanbul", "black", 4, 3),
-    City("Tripoli", "black", 4, 3),
+    City("Atlanta", "blue", 1, 1, 0),
+    City("Chicago", "blue", 2, 2, 0),
+    City("London", "blue", 4, 3, 0),
+    City("New York", "blue", 4, 3, 0),
+    City("Washington", "blue", 4, 3, 0),
+    City("San Francisco", "blue", 2, 2, 0),
+    City("Denver", "blue", 2, 2, 0),
+    City("Paris", "blue", 2, 2, 0),
+    # City("Frankfurt", "blue", 2, 2, 0),
+    # City("St. Petersburg", "blue", 1, 1, 0),
+    # City("Bogotá", "yellow", 2, 2, 0),
+    City("Buenos Aires", "yellow", 2, 2, 0),
+    City("Jacksonville", "yellow", 4, 3, 2),
+    City("Lagos", "yellow", 4, 3, 0),
+    City("Lima", "yellow", 1, 1, 0),
+    City("São Paulo", "yellow", 4, 3, 0),
+    City("Santiago", "yellow", 1, 1, 0),
+    City("Los Angeles", "yellow", 1, 1, 0),
+    # City("Mexico City", "yellow", 1, 1, 0),
+    City("Cairo", "black", 4, 3, 0),
+    City("Istanbul", "black", 4, 3, 0),
+    City("Tripoli", "black", 4, 3, 0),
+    # City("Moscow", "black", 1, 1, 0),
 ]
 
 

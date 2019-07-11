@@ -28,19 +28,19 @@ def navbar():
 
 
 def create_app(config_name):
-    app = Flask(__name__)
-    app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
+    this_app = Flask(__name__)
+    this_app.config.from_object(config[config_name])
+    config[config_name].init_app(this_app)
 
-    bootstrap.init_app(app)
-    db.init_app(app)
-    nav.init_app(app)
+    bootstrap.init_app(this_app)
+    db.init_app(this_app)
+    nav.init_app(this_app)
 
     from .main import main as main_blueprint
 
-    app.register_blueprint(main_blueprint)
+    this_app.register_blueprint(main_blueprint)
 
-    return app
+    return this_app
 
 
 app = create_app(os.getenv("FLASK_CONFIG") or "default")
@@ -57,6 +57,7 @@ def init_db():
                 color=city.color,
                 player_cards=city.player_cards,
                 infection_cards=city.infection_cards,
+                in_box_6=city.in_box_6,
             )
             for city in constants.cities
         ]
