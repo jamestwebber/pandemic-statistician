@@ -1,7 +1,8 @@
 # coding=utf-8
 
-# file of constants to keep things readable
+# file of constants. Many need to be updated per-game because I'm too lazy to code them
 
+from collections import Counter
 from dataclasses import dataclass
 
 
@@ -11,35 +12,37 @@ class City:
     color: str
     player_cards: int
     infection_cards: int
-    in_box_6: int
 
 
 cities = [
-    City("Atlanta", "blue", 1, 1, 0),
-    City("Chicago", "blue", 2, 2, 0),
-    City("London", "blue", 4, 3, 0),
-    City("New York", "blue", 4, 3, 0),
-    City("Washington", "blue", 4, 3, 0),
-    City("San Francisco", "blue", 2, 2, 0),
-    City("Denver", "blue", 2, 2, 0),
-    City("Paris", "blue", 2, 2, 0),
-    # City("Frankfurt", "blue", 2, 2, 0),
-    # City("St. Petersburg", "blue", 1, 1, 0),
-    # City("Bogotá", "yellow", 2, 2, 0),
-    City("Buenos Aires", "yellow", 2, 2, 0),
-    City("Jacksonville", "yellow", 4, 3, 2),
-    City("Lagos", "yellow", 4, 3, 0),
-    City("Lima", "yellow", 1, 1, 0),
-    City("São Paulo", "yellow", 4, 3, 0),
-    City("Santiago", "yellow", 1, 1, 0),
-    City("Los Angeles", "yellow", 1, 1, 0),
-    # City("Mexico City", "yellow", 1, 1, 0),
-    City("Cairo", "black", 4, 3, 0),
-    City("Istanbul", "black", 4, 3, 0),
-    City("Tripoli", "black", 4, 3, 0),
-    # City("Moscow", "black", 1, 1, 0),
+    City("Atlanta", "blue", 1, 1),
+    City("Chicago", "blue", 2, 2),
+    City("London", "blue", 4, 3),
+    City("New York", "blue", 4, 3),
+    City("Washington", "blue", 4, 3),
+    City("San Francisco", "blue", 2, 2),
+    City("Denver", "blue", 2, 2),
+    City("Paris", "blue", 2, 2),
+    # City("Frankfurt", "blue", 2, 2),
+    # City("St. Petersburg", "blue", 1, 1),
+    # City("Bogotá", "yellow", 2, 2),
+    City("Buenos Aires", "yellow", 2, 2),
+    City("Jacksonville", "yellow", 4, 3),
+    City("Lagos", "yellow", 4, 3),
+    City("Lima", "yellow", 1, 1),
+    City("São Paulo", "yellow", 4, 3),
+    City("Santiago", "yellow", 1, 1),
+    City("Los Angeles", "yellow", 1, 1),
+    # City("Mexico City", "yellow", 1, 1),
+    City("Cairo", "black", 4, 3),
+    City("Istanbul", "black", 4, 3),
+    City("Tripoli", "black", 4, 3),
+    # City("Moscow", "black", 1, 1),
 ]
 
+# cards exiled to box six, needs to be updated per game
+player_cards_in_box_six = Counter()
+infection_cards_in_box_six = Counter({City("Jacksonville", "yellow", 4, 3): 2})
 
 max_inf = max(city.infection_cards for city in cities)
 
@@ -67,8 +70,12 @@ infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 
+# number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
+extra_cards = 13  # TODO: update for June
+
 # number of epidemics is based on the number of city cards in starting deck
-epidemics = {0: 5, 36: 6, 44: 7, 51: 8, 57: 9, 62: 10}
+# epidemics = {0: 5, 36: 6, 44: 7, 51: 8, 57: 9, 62: 10}  # TODO: double check
+epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}
 num_players = 4  # four players, of course
 
 # number of hands in initial hands, according to NUM_PLAYERS

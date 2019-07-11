@@ -63,12 +63,6 @@ class BeginForm(FlaskForm):
         validators=[InputRequired(), NumberRange(0, 10)],
         description="How many burritos we have",
     )
-    extra_cards = IntegerField(
-        "Bonus Cards",
-        default=9,
-        validators=[InputRequired(), NumberRange(0)],
-        description="Number of other cards (e.g. production cards) in the deck",
-    )
     submit = SubmitField("Submit")
 
 

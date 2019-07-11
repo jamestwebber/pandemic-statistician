@@ -57,7 +57,6 @@ def init_db():
                 color=city.color,
                 player_cards=city.player_cards,
                 infection_cards=city.infection_cards,
-                in_box_6=city.in_box_6,
             )
             for city in constants.cities
         ]

@@ -53,11 +53,7 @@ def begin():
     form = forms.BeginForm()
 
     if form.validate_on_submit():
-        game = Game(
-            funding_rate=form.funding_rate.data,
-            extra_cards=form.extra_cards.data,
-            turn_num=-1,
-        )
+        game = Game(funding_rate=form.funding_rate.data, turn_num=-1)
 
         db.session.add(game)
         db.session.commit()

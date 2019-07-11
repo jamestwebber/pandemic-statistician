@@ -52,15 +52,19 @@ def get_game_state(game, draw_phase=True):
         .all()
     )
 
-    city_cards = sum(city.player_cards for city in c.cities)
-    epidemic_cards = c.epidemics[min(k for k in c.epidemics if k > city_cards)]
+    city_cards = sum(city.player_cards for city in c.cities) - sum(
+        c.player_cards_in_box_six.values()
+    )
+    epidemic_cards = c.epidemics[
+        min((k for k in c.epidemics if k > city_cards), default=-1)
+    ]
 
     # deck size after dealing the initial hands
     post_setup_deck_size = (
         city_cards
         + epidemic_cards
         + game.funding_rate
-        + game.extra_cards
+        + c.extra_cards
         - c.num_players * c.initial_hand_size[c.num_players]
     )
 
@@ -77,10 +81,11 @@ def get_game_state(game, draw_phase=True):
 
     stack = defaultdict(Counter)
     for city in c.cities:
-        stack[1][city] = city.infection_cards - city.in_box_6
-        stack[-1][city] = city.in_box_6
+        stack[1][city] = city.infection_cards - c.infection_cards_in_box_six[city]
+        stack[-1][city] = c.infection_cards_in_box_six[city]
 
-    current_app.logger.debug(f"City cards in starting deck: {city_cards}\n")
+    current_app.logger.info(f"City cards in starting deck: {city_cards}")
+    current_app.logger.info(f"Epidemics: {epidemic_cards}\n")
 
     current_app.logger.debug(f"----- TURN {len(turns) - 1} ---------\n\n")
 

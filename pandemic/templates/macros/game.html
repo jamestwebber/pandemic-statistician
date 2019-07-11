@@ -32,9 +32,9 @@
             <tr class="gs-header">
               <th rowspan="2">hidden</th>
               <th rowspan="2">City</th>
-              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">Infection | ¬Epidemic</th>
+              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">P(Infection | ¬Epidemic) x P(¬Epidemic)</th>
               <th rowspan="2">Epidemic</th>
-              <th colspan="{{ game_state['city_data'][0]['epi_inf_risk']|length }}">Infection | Epidemic</th>
+              <th colspan="{{ game_state['city_data'][0]['epi_inf_risk']|length }}">P(Infection | Epidemic) x P(Epidemic)</th>
             </tr>
             <tr class="gs-header">
               {%- for i in range( game_state['city_data'][0]['inf_risk']|length ) %}
@@ -140,17 +140,14 @@
       <div class="col-sm-5">Funding Rate</div>
       <div class="col-sm-5">{{ game.funding_rate }}</div>
     </div>
-    <div class="row col-sm-8 h4">
-      <div class="col-sm-5">Extra Cards</div>
-      <div class="col-sm-5">{{ game.extra_cards }}</div>
-    </div>
     <div class="row col-sm-12 h2">Characters</div>
     <div class="row col-sm-8">
     {% if game.characters %}
       {% for char in game.characters %}
         <div class="row col-sm-12">
-          <div class="col-sm-3">{{ char.character.first_name}}</div>
-          <div class="col-sm-3">{{ char.character.middle_name}}</div>
+          <div class="col-sm-1">{{ char.turn_num + 1 }}</div>
+          <div class="col-sm-3">{{ char.character.first_name }}</div>
+          <div class="col-sm-3">{{ char.character.middle_name }}</div>
           <div class="col-sm-3">{{ char.character.name }}</div>
         </div>
       {% endfor %}
