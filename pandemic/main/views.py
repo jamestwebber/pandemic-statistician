@@ -19,7 +19,7 @@ from pandemic.models import (
 
 
 @main.app_template_filter("to_percent")
-def to_percent(v, odds=True):
+def to_percent(v: float, odds: bool = True):
     if v > 0.01:
         pct = f"{v * 100.0:.1f}%"
     elif v > 0:
@@ -34,7 +34,7 @@ def to_percent(v, odds=True):
 
 
 @main.app_template_filter("danger_level")
-def danger_level(v):
+def danger_level(v: float):
     if v > 0.33:
         return "bg-danger"
     elif v > 0.25:
@@ -44,8 +44,42 @@ def danger_level(v):
 
 
 @main.app_template_filter("color_i")
-def color_i(color):
+def color_i(color: str):
     return c.color_codes[color]
+
+
+def check_game_id(game_id: int = None):
+    if not (game_id or session.get("game_id", None)):
+        flash("No game in progress", "error")
+        return None, None, redirect(url_for(".begin"))
+    elif game_id:
+        session["game_id"] = game_id
+
+    game_id = session["game_id"]
+    game = Game.query.filter_by(id=game_id).one_or_none()
+    if game is None:
+        flash("No game with that ID", "error")
+        session["game_id"] = None
+        return None, None, redirect(url_for(".begin"))
+
+    this_turn = Turn.query.filter_by(
+        game_id=game.id, turn_num=game.turn_num
+    ).one_or_none()
+
+    return game, this_turn, None
+
+
+def exile_cities(this_turn: Turn, removed_cities: Counter):
+    for city_name in removed_cities:
+        city = City.query.filter_by(name=city_name).one()
+        ci = CityExile(
+            city_id=city.id,
+            turn_id=this_turn.id,
+            turn=this_turn,
+            city=city,
+            count=removed_cities[city_name],
+        )
+        this_turn.exiled.append(ci)
 
 
 @main.route("/", methods=("GET", "POST"))
@@ -77,23 +111,11 @@ def begin():
 
 @main.route("/draw", methods=("GET", "POST"))
 @main.route("/draw/<int:game_id>", methods=("GET", "POST"))
-def draw(game_id=None):
-    if not (game_id or session.get("game_id", None)):
-        flash("No game in progress", "error")
-        return redirect(url_for("main.begin"))
-    elif game_id:
-        session["game_id"] = game_id
+def draw(game_id: int = None):
+    game, this_turn, redi = check_game_id(game_id)
+    if redi is not None:
+        return redi
 
-    game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).one_or_none()
-    if game is None:
-        flash("No game with that ID", "error")
-        session["game_id"] = None
-        return redirect(url_for(".begin"))
-
-    this_turn = Turn.query.filter_by(
-        game_id=game.id, turn_num=game.turn_num
-    ).one_or_none()
     if this_turn is None:
         this_turn = Turn(game_id=game.id, turn_num=game.turn_num)
         db.session.add(this_turn)
@@ -105,18 +127,7 @@ def draw(game_id=None):
 
     if form.validate_on_submit():
         if form.exile_cities and form.exile_cities.data:
-            removed_cities = Counter(form.exile_cities.data)
-
-            for city_name in removed_cities:
-                city = City.query.filter_by(name=city_name).one()
-                ci = CityExile(
-                    city_id=city.id,
-                    turn_id=this_turn.id,
-                    turn=this_turn,
-                    city=city,
-                    count=removed_cities[city_name],
-                )
-                this_turn.exiled.append(ci)
+            exile_cities(this_turn, Counter(form.exile_cities.data))
 
         if form.epidemic and form.epidemic.data:
             this_turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
@@ -163,21 +174,11 @@ def draw(game_id=None):
     "/removecity/<int:max_stack>/<int:n_cities>/<int:also_forecast>",
     methods=("GET", "POST"),
 )
-def removecity(max_stack=0, n_cities=1, also_forecast=0):
-    if session.get("game_id", None) is None:
-        flash("No game in progress", "error")
-        return redirect(url_for(".begin"))
+def removecity(max_stack: int = 0, n_cities: int = 1, also_forecast: int = 0):
+    game, this_turn, redi = check_game_id()
+    if redi is not None:
+        return redi
 
-    game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).one_or_none()
-    if game is None:
-        flash("No game with that ID", "error")
-        session["game_id"] = None
-        return redirect(url_for(".begin"))
-
-    this_turn = Turn.query.filter_by(
-        game_id=game.id, turn_num=game.turn_num
-    ).one_or_none()
     if this_turn is None:
         flash("Need to draw cards first", "error")
         return redirect(url_for(".draw"))
@@ -187,22 +188,11 @@ def removecity(max_stack=0, n_cities=1, also_forecast=0):
     form = forms.RemoveCityForm(game_state, max_stack, n_cities)
 
     if form.validate_on_submit():
-        if form.game.data != game_id:
+        if game_id and form.game.data != game_id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        removed_cities = Counter(form.cities.data)
-
-        for city_name in removed_cities:
-            city = City.query.filter_by(name=city_name).one()
-            ci = CityExile(
-                city_id=city.id,
-                turn_id=this_turn.id,
-                turn=this_turn,
-                city=city,
-                count=removed_cities[city_name],
-            )
-            this_turn.exiled.append(ci)
+        exile_cities(this_turn, Counter(form.cities.data))
 
         db.session.commit()
 
@@ -218,20 +208,10 @@ def removecity(max_stack=0, n_cities=1, also_forecast=0):
 
 @main.route("/forecast", methods=("GET", "POST"))
 def forecast():
-    if session.get("game_id", None) is None:
-        flash("No game in progress", "error")
-        return redirect(url_for(".begin"))
+    game, this_turn, redi = check_game_id()
+    if redi is not None:
+        return redi
 
-    game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).one_or_none()
-    if game is None:
-        flash("No game with that ID", "error")
-        session["game_id"] = None
-        return redirect(url_for(".begin"))
-
-    this_turn = Turn.query.filter_by(
-        game_id=game.id, turn_num=game.turn_num
-    ).one_or_none()
     if this_turn is None:
         flash("Need to draw cards first", "error")
         return redirect(url_for(".draw"))
@@ -241,7 +221,7 @@ def forecast():
     form = forms.ForecastForm(game_state)
 
     if form.validate_on_submit():
-        if form.game.data != game_id:
+        if game_id and form.game.data != game_id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
@@ -267,23 +247,9 @@ def forecast():
 
 @main.route("/infect", methods=("GET", "POST"))
 @main.route("/infect/<int:game_id>", methods=("GET", "POST"))
-def infect(game_id=None):
-    if not (game_id or session.get("game_id", None)):
-        flash("No game in progress", "error")
-        return redirect(url_for(".begin"))
-    elif game_id:
-        session["game_id"] = game_id
+def infect(game_id: int = None):
+    game, this_turn, redi = check_game_id(game_id)
 
-    game_id = session["game_id"]
-    game = Game.query.filter_by(id=game_id).one_or_none()
-    if game is None:
-        flash("No game with that ID", "error")
-        session["game_id"] = None
-        return redirect(url_for(".begin"))
-
-    this_turn = Turn.query.filter_by(
-        game_id=game.id, turn_num=game.turn_num
-    ).one_or_none()
     if this_turn is None:
         flash("Not on the infection step right now", "error")
         return redirect(url_for(".draw"))
@@ -296,7 +262,7 @@ def infect(game_id=None):
         form = forms.InfectForm(game_state, game.characters)
 
     if form.validate_on_submit():
-        if form.game.data != game_id:
+        if game_id and form.game.data != game_id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
@@ -330,7 +296,7 @@ def history():
 
 
 @main.route("/history/<int:game_id>")
-def game_history(game_id):
+def game_history(game_id: int):
     game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
         flash("No game with that ID", "error")
@@ -342,7 +308,7 @@ def game_history(game_id):
 
 
 @main.route("/replay/<int:game_id>/<turn_num>", methods=("GET", "POST"))
-def replay(game_id, turn_num):
+def replay(game_id: int, turn_num: str):
     turn_num = int(turn_num)
     game = Game.query.filter_by(id=game_id).one_or_none()
     if game is None:
