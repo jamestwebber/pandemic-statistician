@@ -23,8 +23,8 @@ cities = [
     City("San Francisco", "blue", 2, 2),
     City("Denver", "blue", 2, 2),
     City("Paris", "blue", 2, 2),
-    # City("Frankfurt", "blue", 2, 2),
-    # City("St. Petersburg", "blue", 1, 1),
+    City("Frankfurt", "blue", 2, 2),
+    City("St. Petersburg", "blue", 1, 1),
     # City("Bogotá", "yellow", 2, 2),
     City("Buenos Aires", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
@@ -42,7 +42,9 @@ cities = [
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
-infection_cards_in_box_six = Counter({City("Jacksonville", "yellow", 4, 3): 2})
+infection_cards_in_box_six = Counter(
+    {City("Jacksonville", "yellow", 4, 3): 2, City("Washington", "blue", 4, 3): 3}
+)
 
 max_inf = max(city.infection_cards for city in cities)
 
@@ -71,7 +73,7 @@ infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 13  # TODO: update for June
+extra_cards = 14
 
 # number of epidemics is based on the number of city cards in starting deck
 # epidemics = {0: 5, 36: 6, 44: 7, 51: 8, 57: 9, 62: 10}  # TODO: double check

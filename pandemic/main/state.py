@@ -56,7 +56,7 @@ def get_game_state(game, draw_phase=True):
         c.player_cards_in_box_six.values()
     )
     epidemic_cards = c.epidemics[
-        min((k for k in c.epidemics if k > city_cards), default=-1)
+        min((k for k in c.epidemics if k >= city_cards), default=-1)
     ]
 
     # deck size after dealing the initial hands
