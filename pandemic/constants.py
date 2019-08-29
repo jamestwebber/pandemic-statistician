@@ -64,6 +64,14 @@ characters = [
     Character("Radio Operator", "Ronald", "O'Brian", "4LOKO", "glyphicon-headphones"),
     Character("Laborer", "Lazarus", '"Larry" III³', "Fresno", "glyphicon-wrench"),
     Character("Farmer", "Furtle", '"the turtle"', "Fresno", "glyphicon-cutlery"),
+    Character(
+        "Sanitation Officer",
+        "Sandy",
+        "McSandpersonface",
+        "Doña Mago",
+        "glyphicon-trash",
+    ),
+    Character("Captain", "Swash", "B. Uckler", "Doña Mago", "glyphicon-globe"),
 ]
 
 
