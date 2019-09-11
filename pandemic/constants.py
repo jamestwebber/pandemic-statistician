@@ -84,7 +84,6 @@ color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
 extra_cards = 14
 
 # number of epidemics is based on the number of city cards in starting deck
-# epidemics = {0: 5, 36: 6, 44: 7, 51: 8, 57: 9, 62: 10}  # TODO: double check
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}
 num_players = 4  # four players, of course
 
