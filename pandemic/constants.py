@@ -15,7 +15,7 @@ class City:
 
 
 cities = [
-    City("Atlanta", "blue", 1, 1),
+    City("Atlanta", "blue", 1, 0),  # due to lockdown
     City("Chicago", "blue", 2, 2),
     City("London", "blue", 4, 3),
     City("New York", "blue", 4, 3),
@@ -25,7 +25,8 @@ cities = [
     City("Paris", "blue", 2, 2),
     City("Frankfurt", "blue", 2, 2),
     City("St. Petersburg", "blue", 1, 1),
-    # City("Bogotá", "yellow", 2, 2),
+    # City("Johannesburg", "blue", 2, 2),
+    City("Bogotá", "yellow", 2, 2),
     City("Buenos Aires", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
     City("Lagos", "yellow", 4, 3),
@@ -34,16 +35,26 @@ cities = [
     City("Santiago", "yellow", 1, 1),
     City("Los Angeles", "yellow", 1, 1),
     # City("Mexico City", "yellow", 1, 1),
+    City("Kinshasa", "yellow", 1, 1),
+    # City("Khartoum", "yellow", 1, 1),
+    # City("Dar es Salaam", "yellow", 2, 2),
+    # City("Antananarivo", "black", 2, 2),
     City("Cairo", "black", 4, 3),
     City("Istanbul", "black", 4, 3),
     City("Tripoli", "black", 4, 3),
-    # City("Moscow", "black", 1, 1),
+    City("Moscow", "black", 1, 1),
 ]
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
-    {City("Jacksonville", "yellow", 4, 3): 2, City("Washington", "blue", 4, 3): 3}
+    {
+        City("Jacksonville", "yellow", 4, 3): 2,
+        City("Washington", "blue", 4, 3): 3,
+        City("San Francisco", "blue", 2, 2): 2,
+        City("Istanbul", "black", 4, 3): 1,
+        City("Lima", "yellow", 1, 1): 1,
+    }
 )
 
 max_inf = max(city.infection_cards for city in cities)

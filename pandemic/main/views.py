@@ -188,7 +188,7 @@ def removecity(max_stack: int = 0, n_cities: int = 1, also_forecast: int = 0):
     form = forms.RemoveCityForm(game_state, max_stack, n_cities)
 
     if form.validate_on_submit():
-        if game_id and form.game.data != game_id:
+        if form.game.data != game.id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
@@ -221,7 +221,7 @@ def forecast():
     form = forms.ForecastForm(game_state)
 
     if form.validate_on_submit():
-        if game_id and form.game.data != game_id:
+        if form.game.data != game.id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
@@ -262,7 +262,7 @@ def infect(game_id: int = None):
         form = forms.InfectForm(game_state, game.characters)
 
     if form.validate_on_submit():
-        if game_id and form.game.data != game_id:
+        if form.game.data != game.id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
