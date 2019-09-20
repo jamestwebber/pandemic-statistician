@@ -31,7 +31,7 @@ def city_list(cities):
     ]
 
     html.extend(
-        f'<div class="btn city-{city.color} col-xs-3 btn-option"> {city.name}</div>'
+        f'<div class="btn city city-{city.color} col-xs-3 btn-option"> {city.name}</div>'
         for city in cities
     )
     html.append("</div></div>")
@@ -138,7 +138,7 @@ def select_cities(field, **kwargs):
             options["checked"] = "checked"
         html.append(
             (
-                '<div class="btn city-{} col-sm-3"><input {} /> '
+                '<div class="btn city city-{} col-sm-3"><input {} /> '
                 '<label for="{}">{}</label></div>'
             ).format(city.color, widgets.html_params(**options), field_id, city.name)
         )
@@ -163,7 +163,7 @@ def authorization(field, **kwargs):
             options["checked"] = "checked"
         html.append(
             (
-                '<div class="btn players-{} col-xs-2"><input {} /> <label for="{}">'
+                '<div class="btn player players-{} col-xs-2"><input {} /> <label for="{}">'
                 '<span class="glyphicon {}" aria-hidden="true"></span> Yes</label>'
                 "</div>"
             ).format(

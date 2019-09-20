@@ -2,8 +2,8 @@
 
 
 * {
-  margin:0;
-  padding:0;
+  margin: 0;
+  padding: 0;
 }
 
 
@@ -17,32 +17,32 @@ body {
 
 /* colors for cities */
 
-.city-blue {
-  background: #0069AA;
+.city {
   color: #FFFFFF;
   text-align: center;
   border-radius: 3px !important;
+}
+
+.city-blue {
+  background: #0069AA;
 }
 
 .city-red {
   background: #E41937;
-  color: #FFFFFF;
-  text-align: center;
-  border-radius: 3px !important;
 }
 
 .city-black {
   background: #000000;
-  color: #FFFFFF;
-  text-align: center;
-  border-radius: 3px !important;
 }
 
 .city-yellow {
   background: #FFF56F;
   color: #000000;
-  text-align: center;
-  border-radius: 3px !important;
+}
+
+.city-white {
+  background: #FFFFFF;
+  color: #000000;
 }
 
 
@@ -125,31 +125,26 @@ ol.js-item-grid > li > div > div.btn {
 
 /* colors for players */
 
+.player {
+  color: #000000;
+  min-height: 40px;
+  border: 1px solid #ccc
+}
+
 .players-0 {
   background: #614B3D;
   color: #FFFFFF;
-  min-height: 40px;
-  border: 1px solid #ccc
 }
 
 .players-1 {
   background: #F0F0F0;
-  color: #000000;
-  min-height: 40px;
-  border: 1px solid #ccc
 }
 
 .players-2 {
   background: #E66CA9;
-  color: #000000;
-  min-height: 40px;
-  border: 1px solid #ccc
 }
 
 .players-3 {
   background: #00ABC7;
-  color: #000000;
-  min-height: 40px;
-  border: 1px solid #ccc
 }
 
