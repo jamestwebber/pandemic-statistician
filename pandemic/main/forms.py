@@ -245,6 +245,7 @@ class RemoveCityForm(FlaskForm):
             (city.name, (city, i))
             for i in range(0, max_s + 1)
             for city in game_state["stack"][i]
+            if city != c.hollow_men
             for _ in range(game_state["stack"][i][city])
         ]
 
