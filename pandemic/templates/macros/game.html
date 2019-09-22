@@ -26,30 +26,42 @@
           {% endif %}
         </div>
       </div>
-      {% if game_state['hollow_risk'] | length -%}
-        <div class="row h3">
-          <div class="col-sm-4">P(Hollow Men | ¬Epidemic):</div>
-          <ol>
-          {%- for i in range( game_state['hollow_risk'] | length ) %}
-            <li class="col-sm-2 {{ game_state['hollow_risk'][i] | danger_level }}">
-              {{ game_state['hollow_risk'][i] | to_percent(odds=False) }}
-            </li>
-          {%- endfor %}
-          </ol>
+      {%- if game_state['hollow_risk'] or game_state['epi_hollow_risk'] %}
+        <div class="row">
+          <table class="table hollow-men-table">
+            <thead>
+              <tr class="hm-header">
+                <th></th>
+                {%- for i in range( (game_state['hollow_risk'] | length, game_state['epi_hollow_risk'] | length ) | max ) %}
+                  <th>{{ i + 1 }}</th>
+                {%- endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {%- if game_state['hollow_risk'] %}
+                <tr>
+                  <th>P(Hollow Men | ¬Epidemic)</th>
+                  {%- for h_risk in game_state['hollow_risk'] %}
+                    <td class="{{ h_risk | danger_level }}">
+                      {{ h_risk | to_percent(odds=False) }}
+                    </td>
+                  {%- endfor %}
+                </tr>
+              {% endif -%}
+              {%- if game_state['epi_hollow_risk'] %}
+                <tr>
+                  <th>P(Hollow Men | Epidemic)</th>
+                  {%- for h_risk in game_state['epi_hollow_risk'] %}
+                    <td class="{{ h_risk | danger_level }}">
+                      {{ h_risk | to_percent(odds=False) }}
+                    </td>
+                  {%- endfor %}
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
         </div>
-      {%- endif %}
-      {% if game_state['epi_hollow_risk'] | length -%}
-        <div class="row h3">
-          <div class="col-sm-4">P(Hollow Men | Epidemic):</div>
-          <ol>
-          {%- for i in range( game_state['epi_hollow_risk'] | length ) %}
-            <li class="col-sm-2 {{ game_state['epi_hollow_risk'][i] | danger_level }}">
-              {{ game_state['epi_hollow_risk'][i] | to_percent(odds=False) }}
-            </li>
-          {%- endfor %}
-          </ol>
-        </div>
-      {%- endif %}
+      {% endif %}
       <div class="row">
         <table class="table city-table">
           <thead>

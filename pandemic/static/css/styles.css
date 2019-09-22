@@ -53,11 +53,22 @@ div.game-state {
   text-align: right;
 }
 
+table.hollow-men-table {
+  margin-top: 20px;
+  margin-left: 20%;
+  margin-right: 20%;
+  width: 60%;
+}
+
+tr.hm-header > th {
+  text-align: right;
+}
+
 tr.gs-header > th {
   text-align: center;
 }
 
-td {
+table.city-table td {
   width: 20%;
 }
 
