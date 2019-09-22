@@ -1,13 +1,13 @@
 {% macro game_state(game_state) %}
   {% if game_state %}
     <div class="container game-state">
-      <div class="row">
-        <div class="col-sm-5 h3">Turn: {{ game_state['turn_num'] }}</div>
-        <div class="col-sm-5 h3">Cards Remaining: {{ game_state['deck_size'] }}</div>
+      <div class="row h3">
+        <div class="col-sm-5">Turn: {{ game_state['turn_num'] }}</div>
+        <div class="col-sm-5">Cards Remaining: {{ game_state['deck_size'] }}</div>
       </div>
-      <div class="row">
-        <div class="col-sm-5 h3">Epidemics: {{ game_state['epidemics'] }}</div>
-        <div class="col-sm-5 h3 {{ game_state['epi_risk'] | danger_level }}">
+      <div class="row h3">
+        <div class="col-sm-5">Epidemics: {{ game_state['epidemics'] }}</div>
+        <div class="col-sm-5 {{ game_state['epi_risk'] | danger_level }}">
           {% if game_state['epi_risk'] > 1.0 %}
             Epidemic Risk: 100 + {{ (game_state['epi_risk'] - 1) | to_percent }}
           {% elif game_state['epi_risk'] > 0.0 %}
@@ -17,8 +17,8 @@
           {% endif %}
         </div>
       </div>
-      <div class="row">
-        <div class="col-sm-10 h3">
+      <div class="row h3">
+        <div class="col-sm-10">
           {% if game_state['epi_risk'] > 1.0 %}
             Epidemic incoming! Second epidemic within {{ game_state['epi_in'] + 1 }} cards
           {% else %}
@@ -26,21 +26,45 @@
           {% endif %}
         </div>
       </div>
+      {% if game_state['hollow_risk'] | length -%}
+        <div class="row h3">
+          <div class="col-sm-4">P(Hollow Men | ¬Epidemic):</div>
+          <ol>
+          {%- for i in range( game_state['hollow_risk'] | length ) %}
+            <li class="col-sm-2 {{ game_state['hollow_risk'][i] | danger_level }}">
+              {{ game_state['hollow_risk'][i] | to_percent(odds=False) }}
+            </li>
+          {%- endfor %}
+          </ol>
+        </div>
+      {%- endif %}
+      {% if game_state['epi_hollow_risk'] | length -%}
+        <div class="row h3">
+          <div class="col-sm-4">P(Hollow Men | Epidemic):</div>
+          <ol>
+          {%- for i in range( game_state['epi_hollow_risk'] | length ) %}
+            <li class="col-sm-2 {{ game_state['epi_hollow_risk'][i] | danger_level }}">
+              {{ game_state['epi_hollow_risk'][i] | to_percent(odds=False) }}
+            </li>
+          {%- endfor %}
+          </ol>
+        </div>
+      {%- endif %}
       <div class="row">
         <table class="table city-table">
           <thead>
             <tr class="gs-header">
               <th rowspan="2">hidden</th>
               <th rowspan="2">City</th>
-              <th colspan="{{ game_state['city_data'][0]['inf_risk']|length }}">P(Infection | ¬Epidemic) x P(¬Epidemic)</th>
+              <th colspan="{{ game_state['city_data'][0]['inf_risk'] | length }}">P(Infection | ¬Epidemic) x P(¬Epidemic)</th>
               <th rowspan="2">Epidemic</th>
-              <th colspan="{{ game_state['city_data'][0]['epi_inf_risk']|length }}">P(Infection | Epidemic) x P(Epidemic)</th>
+              <th colspan="{{ game_state['city_data'][0]['epi_inf_risk'] | length }}">P(Infection | Epidemic) x P(Epidemic)</th>
             </tr>
             <tr class="gs-header">
-              {%- for i in range( game_state['city_data'][0]['inf_risk']|length ) %}
+              {%- for i in range( game_state['city_data'][0]['inf_risk'] | length ) %}
                 <th class="infection-risk">{{ i + 1 }}</th>
               {%- endfor %}
-              {%- for i in range( game_state['city_data'][0]['epi_inf_risk']|length ) %}
+              {%- for i in range( game_state['city_data'][0]['epi_inf_risk'] | length ) %}
                 <th class="epi-infection-risk">{{ i + 1 }}</th>
               {%- endfor %}
             </tr>
@@ -49,7 +73,7 @@
           {%- for city in game_state['city_data'] %}
             <tr>
               <td>{{ city['color'] | color_i }}</td>
-              <td class="city-{{ city['color'] }}">{{ city['name'] }}</td>
+              <td class="city city-{{ city['color'] }}">{{ city['name'] }}</td>
               {%- for inf_risk in city['inf_risk'] %}
                 <td class="{{ inf_risk | danger_level }}">{{ inf_risk | to_percent(odds=False) }}</td>
               {%- endfor %}
@@ -164,8 +188,8 @@
     {%- for turn in game.turns %}
       <div class="row col-sm-12 h4">
         <div class="row col-sm-1"><a href={{ url_for('main.replay', game_id=game.id, turn_num=turn.turn_num) }}><span class="glyphicon glyphicon-backward" aria-hidden="true"></span> {{ turn.turn_num }}</a></div>
-        <div class="row col-sm-4">{% if turn.infections %}{{ turn.infections|join(', ') }}{% else %}No cities{% endif %}</div>
-        <div class="row col-sm-2">{% if turn.epidemic %}{{ turn.epidemic|join(', ') }}{% else %}-{% endif %}</div>
+        <div class="row col-sm-4">{% if turn.infections %}{{ turn.infections | join(', ') }}{% else %}No cities{% endif %}</div>
+        <div class="row col-sm-2">{% if turn.epidemic %}{{ turn.epidemic | join(', ') }}{% else %}-{% endif %}</div>
       </div>
     {% else %}
       <div class="row col-sm-12">No turns have been played yet</div>

@@ -117,6 +117,7 @@ class DrawForm(FlaskForm):
             self.exile_cities.choices = [
                 (city.name, (city, 0))
                 for city in game_state["stack"][0]
+                if city != c.hollow_men
                 for _ in range(game_state["stack"][0][city])
             ]
 
@@ -170,7 +171,8 @@ class SetupInfectForm(FlaskForm):
         ]
 
     def validate_cities(self, field):
-        if len(field.data) != c.infection_rates[self.epidemics]:
+        n_infected = sum(1 for n in field.data if n != c.hollow_men.name)
+        if n_infected != c.infection_rates[self.epidemics]:
             field.data = []
             raise ValidationError("You didn't infect the right number of cities")
 

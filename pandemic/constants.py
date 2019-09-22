@@ -17,6 +17,7 @@ class City:
 cities = [
     City("Atlanta", "blue", 1, 0),  # due to lockdown
     City("Chicago", "blue", 2, 2),
+    # City("Johannesburg", "blue", 2, 2),
     City("London", "blue", 4, 3),
     City("New York", "blue", 4, 3),
     City("Washington", "blue", 4, 3),
@@ -25,39 +26,50 @@ cities = [
     City("Paris", "blue", 2, 2),
     City("Frankfurt", "blue", 2, 2),
     City("St. Petersburg", "blue", 1, 1),
-    # City("Johannesburg", "blue", 2, 2),
     City("Bogotá", "yellow", 2, 2),
     City("Buenos Aires", "yellow", 2, 2),
+    # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
+    # City("Khartoum", "yellow", 1, 1),
+    City("Kinshasa", "yellow", 1, 1),
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
-    City("São Paulo", "yellow", 4, 3),
-    City("Santiago", "yellow", 1, 1),
     City("Los Angeles", "yellow", 1, 1),
     # City("Mexico City", "yellow", 1, 1),
-    City("Kinshasa", "yellow", 1, 1),
-    # City("Khartoum", "yellow", 1, 1),
-    # City("Dar es Salaam", "yellow", 2, 2),
+    City("São Paulo", "yellow", 4, 3),
+    City("Santiago", "yellow", 1, 1),
     # City("Antananarivo", "black", 2, 2),
+    City("Baghdad", "black", 2, 2),
     City("Cairo", "black", 4, 3),
+    # City("Delhi", "black", 1, 1),
     City("Istanbul", "black", 4, 3),
+    # City("Kolkata", "black", 1, 1),
+    City("Moscow", "black", 1, 1), # potential lockdown
+    # City("New Mumbai", "black", 2, 2),
+    # City("Riyadh", "black", 2, 2),
+    # City("Tehran", "black", 1, 1),
     City("Tripoli", "black", 4, 3),
-    City("Moscow", "black", 1, 1),
+    # the hollow men
+    City("Hollow Men Gather", "white", 0, 4),
 ]
+
+# copy for convenience
+hollow_men = City("Hollow Men Gather", "white", 0, 4)
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
     {
-        City("Jacksonville", "yellow", 4, 3): 2,
-        City("Washington", "blue", 4, 3): 3,
-        City("San Francisco", "blue", 2, 2): 2,
         City("Istanbul", "black", 4, 3): 1,
+        City("Jacksonville", "yellow", 4, 3): 2,
         City("Lima", "yellow", 1, 1): 1,
+        City("Los Angeles", "yellow", 1, 1): 1,
+        City("San Francisco", "blue", 2, 2): 2,
+        City("Washington", "blue", 4, 3): 3,
     }
 )
 
-max_inf = max(city.infection_cards for city in cities)
+max_inf = max(city.infection_cards for city in cities if city != hollow_men)
 
 
 @dataclass(frozen=True)
@@ -89,10 +101,11 @@ characters = [
 infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
 
-color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3}  # for CSS styles
+# color codes for CSS styles
+color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 14
+extra_cards = 15
 
 # number of epidemics is based on the number of city cards in starting deck
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}

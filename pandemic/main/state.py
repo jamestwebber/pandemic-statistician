@@ -81,8 +81,11 @@ def get_game_state(game, draw_phase=True):
 
     stack = defaultdict(Counter)
     for city in c.cities:
-        stack[1][city] = city.infection_cards - c.infection_cards_in_box_six[city]
-        stack[-1][city] = c.infection_cards_in_box_six[city]
+        if city == c.hollow_men:
+            stack[0][city] = city.infection_cards
+        else:
+            stack[1][city] = city.infection_cards - c.infection_cards_in_box_six[city]
+            stack[-1][city] = c.infection_cards_in_box_six[city]
 
     current_app.logger.info(f"City cards in starting deck: {city_cards}")
     current_app.logger.info(f"Epidemics: {epidemic_cards}\n")
@@ -214,9 +217,11 @@ def get_game_state(game, draw_phase=True):
         },
     )
 
-    inf_risk = infection_risk(stack, c.infection_rates[epidemics], 1.0 - epidemic_risk)
+    inf_risk, hollow_risk = infection_risk(
+        stack, c.infection_rates[epidemics], 1.0 - epidemic_risk
+    )
 
-    epi_inf_risk = epi_infection_risk(
+    epi_inf_risk, epi_hollow_risk = epi_infection_risk(
         stack, c.infection_rates[epidemics + 1], epidemic_risk, epi_risk
     )
 
@@ -228,7 +233,7 @@ def get_game_state(game, draw_phase=True):
             epi_risk=epi_risk[city],
             epi_inf_risk=epi_inf_risk[city],
         )
-        for city in c.cities
+        for city in c.cities if city != c.hollow_men
     ]
 
     return {
@@ -241,5 +246,7 @@ def get_game_state(game, draw_phase=True):
         "epi_in": epidemic_in,
         "epidemics": epidemics,
         "city_data": city_data,
+        "hollow_risk": hollow_risk,
+        "epi_hollow_risk": epi_hollow_risk,
         "stack": stack,
     }

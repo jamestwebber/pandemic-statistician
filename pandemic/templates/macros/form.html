@@ -9,8 +9,8 @@
   {{ wtf.form_errors(form, hiddens='only') }}
 
   <div class="form-group row {% if form.players.errors %} has-error{% endif -%}">
-    {{ form.players.label(class="control-label")|safe }}
-    {{ form.players(class="form-control", **kwargs)|safe }}
+    {{ form.players.label(class="control-label") | safe }}
+    {{ form.players(class="form-control", **kwargs) | safe }}
     {%- if form.players.errors %}
       {% for error in form.players.errors %}
         {% if error is not mapping %}
@@ -18,7 +18,7 @@
         {% endif %}
       {%- endfor %}
     {%- elif form.players.description -%}
-      <p class="help-block">{{form.players.description|safe}}</p>
+      <p class="help-block">{{form.players.description | safe}}</p>
     {%- endif %}
   </div>
   {{ wtf.form_field(form.funding_rate) }}
@@ -36,8 +36,8 @@
   {{ wtf.form_errors(form, hiddens='only') }}
 
   <div class="form-group row {% if form.forecast_cities.errors %} has-error{% endif -%}">
-    {{ form.forecast_cities.label(class="control-label")|safe }}
-    {{ form.forecast_cities(class="form-control", **kwargs)|safe }}
+    {{ form.forecast_cities.label(class="control-label") | safe }}
+    {{ form.forecast_cities(class="form-control", **kwargs) | safe }}
     {%- if form.forecast_cities.errors %}
       {% for error in form.forecast_cities.errors %}
         {% if error is not mapping %}
@@ -45,7 +45,7 @@
         {% endif %}
       {%- endfor %}
     {%- elif form.forecast_cities.description -%}
-      <p class="help-block">{{form.forecast_cities.description|safe}}</p>
+      <p class="help-block">{{form.forecast_cities.description | safe}}</p>
     {%- endif %}
   </div>
   {{ wtf.form_field(form.submit) }}

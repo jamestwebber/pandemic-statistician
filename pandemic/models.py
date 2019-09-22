@@ -102,7 +102,7 @@ class CityInfection(db.Model):
     )
 
     def __repr__(self):
-        return f"<{self.city.name} ({self.count})>"
+        return f"{self.city.name} ({self.count})"
 
 
 class CityForecast(db.Model):
