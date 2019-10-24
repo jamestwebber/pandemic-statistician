@@ -71,7 +71,7 @@ def trim_risk_dicts(inf_risk, hollow_risk, max_len):
 
     return (
         defaultdict(list, {city: inf_risk[city][:max_len] for city in inf_risk}),
-        [v for v in hollow_risk[:c.hollow_men.infection_cards] if v]
+        [v for v in hollow_risk[: c.hollow_men.infection_cards] if v],
     )
 
 

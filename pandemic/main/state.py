@@ -233,7 +233,8 @@ def get_game_state(game, draw_phase=True):
             epi_risk=epi_risk[city],
             epi_inf_risk=epi_inf_risk[city],
         )
-        for city in c.cities if city != c.hollow_men
+        for city in c.cities
+        if city != c.hollow_men
     ]
 
     return {

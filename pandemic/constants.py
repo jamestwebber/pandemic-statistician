@@ -30,7 +30,7 @@ cities = [
     City("Buenos Aires", "yellow", 2, 2),
     # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
-    # City("Khartoum", "yellow", 1, 1),
+    City("Khartoum", "yellow", 1, 1),
     City("Kinshasa", "yellow", 1, 1),
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
@@ -44,10 +44,10 @@ cities = [
     # City("Delhi", "black", 1, 1),
     City("Istanbul", "black", 4, 3),
     # City("Kolkata", "black", 1, 1),
-    City("Moscow", "black", 1, 1), # potential lockdown
+    City("Moscow", "black", 1, 0),  # due to lockdown
     # City("New Mumbai", "black", 2, 2),
     # City("Riyadh", "black", 2, 2),
-    # City("Tehran", "black", 1, 1),
+    City("Tehran", "black", 1, 1),
     City("Tripoli", "black", 4, 3),
     # the hollow men
     City("Hollow Men Gather", "white", 0, 4),
@@ -62,6 +62,7 @@ infection_cards_in_box_six = Counter(
     {
         City("Istanbul", "black", 4, 3): 1,
         City("Jacksonville", "yellow", 4, 3): 2,
+        City("Kinshasa", "yellow", 1, 1): 1,
         City("Lima", "yellow", 1, 1): 1,
         City("Los Angeles", "yellow", 1, 1): 1,
         City("San Francisco", "blue", 2, 2): 2,
