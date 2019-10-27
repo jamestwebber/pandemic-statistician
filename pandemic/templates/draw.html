@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% import "macros/form.html" as form_macro %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+  {{ super() }}
+  <div class="container-fluid">
+    <div class="container">
+      {{ form_macro.draw_form(form) }}
+    </div>
+    {{ game_macros.game_state(game_state) }}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {{ game_macros.game_state_scripts() }}
+{% endblock %}
