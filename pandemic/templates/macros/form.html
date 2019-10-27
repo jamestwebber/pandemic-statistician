@@ -1,7 +1,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 
-{# a little macro just so that the player_field displays errors correctly#}
+{# a little macro just so that the player_field displays errors correctly #}
 {% macro begin_form(form) %}
 {%- set _enctype = [] %}
 <form action="" method="post" class="form" role="form">
@@ -23,6 +23,47 @@
   </div>
   {{ wtf.form_field(form.funding_rate) }}
   {{ wtf.form_field(form.submit) }}
+</form>
+{%- endmacro %}
+
+
+{# a macro to make the monitor part of the draw form look nice #}
+{% macro draw_form(form) %}
+{%- set _enctype = [] %}
+<form action="" method="post" class="form" role="form">
+  {{ form.hidden_tag() }}
+  {{ wtf.form_errors(form, hiddens='only') }}
+
+  {%- for field in form %}
+    {% if not bootstrap_is_hidden_field(field) -%}
+      {%- if not field.type == 'FormField' -%}
+        {{ wtf.form_field(field,
+                          form_type="basic",
+                          horizontal_columns=('lg', 2, 10),
+                          button_map={}) }}
+      {%- else -%}
+        <div class="form-group">
+          <legend>{{field.label}}</legend>
+          {%- for subfield in field %}
+            <div class="form-group {% if field.errors %} has-error{% endif -%}
+                                   {%- if field.flags.required %} required{% endif -%}
+                                   col-xs-6
+            ">
+              {{subfield.label(class="control-label")|safe}}
+              {{subfield(class="form-control", **kwargs)|safe}}
+              {%- if subfield.errors %}
+                {%- for error in subfield.errors %}
+                  <p class="help-block">{{error}}</p>
+                {%- endfor %}
+              {%- elif subfield.description -%}
+                <p class="help-block">{{subfield.description|safe}}</p>
+              {%- endif %}
+            </div>
+          {%- endfor %}
+        </div>
+      {%- endif %}
+    {%- endif %}
+  {%- endfor %}
 
 </form>
 {%- endmacro %}

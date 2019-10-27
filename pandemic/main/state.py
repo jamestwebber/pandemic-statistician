@@ -76,9 +76,6 @@ def get_game_state(game, draw_phase=True):
         ps_cards_drawn = (len(turns) - 1 - draw_phase) * c.draw
         epidemics = 0
 
-    # how many cards are left
-    deck_size = post_setup_deck_size - ps_cards_drawn
-
     stack = defaultdict(Counter)
     for city in c.cities:
         if city == c.hollow_men:
@@ -96,6 +93,15 @@ def get_game_state(game, draw_phase=True):
         stack = clean_stack(stack)
         current_app.logger.debug(f"\non turn {turn.turn_num}:")
         log_stack(stack)
+
+        if turn.monitor:
+            current_app.logger.debug(
+                f"monitored for {turn.monitor} actions,"
+                f" skipped {turn.skipped_epi} epidemics"
+            )
+
+            epidemics += turn.skipped_epi
+            ps_cards_drawn += turn.monitor * c.monitor
 
         if turn.epidemic:
             current_app.logger.debug(f"epidemic: {', '.join(map(str, turn.epidemic))}")
@@ -172,6 +178,9 @@ def get_game_state(game, draw_phase=True):
     stack = clean_stack(stack)
 
     log_stack(stack)
+
+    # how many cards are left
+    deck_size = post_setup_deck_size - ps_cards_drawn
 
     epidemic_stacks = Counter((i % epidemic_cards) for i in range(post_setup_deck_size))
     epidemic_blocks = list(epidemic_stacks.elements())

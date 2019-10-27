@@ -158,6 +158,8 @@ class Turn(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     turn_num = db.Column(db.Integer)  # which turn this is
     game_id = db.Column(db.Integer, db.ForeignKey("games.id"), nullable=False)
+    monitor = db.Column(db.Integer, default=0)  # monitor action(s) taken this turn
+    skipped_epi = db.Column(db.Integer, default=0)  # epidemics skipped by monitoring
 
     def __repr__(self):
         return "<Turn {}: {} infected>".format(

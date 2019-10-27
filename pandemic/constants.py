@@ -115,3 +115,4 @@ num_players = 4  # four players, of course
 # number of hands in initial hands, according to NUM_PLAYERS
 initial_hand_size = {2: 4, 3: 3, 4: 2}
 draw = 2  # draw two cards at a time
+monitor = 4  # monitor discards four cards

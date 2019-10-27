@@ -39,13 +39,26 @@ class PlayerField(Form):
     character = HiddenField(
         "char", validators=[InputRequired(), AnyOf([ch.name for ch in c.characters])]
     )
-    color_index = HiddenField("oolor", validators=[InputRequired()])
+    color_index = HiddenField("color", validators=[InputRequired()])
 
 
 class CityForecastField(Form):
     stack_order = HiddenField("order", validators=[InputRequired()])
     city_name = HiddenField(
         "city", validators=[InputRequired(), AnyOf([city.name for city in c.cities])]
+    )
+
+
+class MonitorField(Form):
+    monitor_count = IntegerField(
+        "Actions Used",
+        default=0,
+        validators=[InputRequired(), NumberRange(0, 4)],
+    )
+    epidemics_seen = IntegerField(
+        "Epidemics Discarded",
+        default=0,
+        validators=[InputRequired(), NumberRange(0, 4)],
     )
 
 
@@ -87,6 +100,7 @@ class DrawForm(FlaskForm):
     lockdown = SelectMultipleField(
         "Lockdown", widget=wdg.authorization, description="Authorize City Lockdown"
     )
+    monitor = FormField(MonitorField, label="Monitor")
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
 
@@ -102,6 +116,7 @@ class DrawForm(FlaskForm):
             del self.resilient_population
             del self.city_forecast
             del self.lockdown
+            del self.monitor
         else:
             character_list = [(ch.character.name, ch) for ch in characters]
 

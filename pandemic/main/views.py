@@ -129,6 +129,10 @@ def draw(game_id: int = None):
         if form.exile_cities and form.exile_cities.data:
             exile_cities(this_turn, Counter(form.exile_cities.data))
 
+        if form.monitor and form.monitor.data:
+            this_turn.monitor = form.monitor.data["monitor_count"]
+            this_turn.skipped_epi = form.monitor.data["epidemics_seen"]
+
         if form.epidemic and form.epidemic.data:
             this_turn.epidemic = [City.query.filter_by(name=form.epidemic.data).one()]
             if form.second_epidemic and form.second_epidemic.data:
@@ -166,7 +170,7 @@ def draw(game_id: int = None):
             return redirect(url_for(".infect"))
 
     return render_template(
-        "base_form.html", title="Draw Cards", game_state=game_state, form=form
+        "draw.html", title="Draw Cards", game_state=game_state, form=form
     )
 
 
