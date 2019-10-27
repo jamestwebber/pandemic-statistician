@@ -51,9 +51,7 @@ class CityForecastField(Form):
 
 class MonitorField(Form):
     monitor_count = IntegerField(
-        "Actions Used",
-        default=0,
-        validators=[InputRequired(), NumberRange(0, 4)],
+        "Actions Used", default=0, validators=[InputRequired(), NumberRange(0, 4)]
     )
     epidemics_seen = IntegerField(
         "Epidemics Discarded",
