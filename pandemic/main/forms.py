@@ -51,13 +51,21 @@ class CityForecastField(Form):
 
 class MonitorField(Form):
     monitor_count = IntegerField(
-        "Actions Used", default=0, validators=[InputRequired(), NumberRange(0, 4)]
+        "Actions Used",
+        default=0,
+        validators=[InputRequired(), NumberRange(0, 4)],
+        description="What's the frequency?",
     )
     epidemics_seen = IntegerField(
         "Epidemics Discarded",
         default=0,
         validators=[InputRequired(), NumberRange(0, 4)],
+        description="Bullets dodged",
     )
+
+    def validate_epidemics_seen(self, field):
+        if field.data > 0 and not self.monitor_count.data:
+            raise ValidationError("Can't skip an epidemic without monitoring")
 
 
 class BeginForm(FlaskForm):

@@ -37,34 +37,32 @@
   {%- for field in form %}
     {% if not bootstrap_is_hidden_field(field) -%}
       {%- if not field.type == 'FormField' -%}
-        {{ wtf.form_field(field,
-                          form_type="basic",
-                          horizontal_columns=('lg', 2, 10),
-                          button_map={}) }}
+        {{ wtf.form_field(field) }}
       {%- else -%}
         <div class="form-group">
-          <legend>{{field.label}}</legend>
-          {%- for subfield in field %}
-            <div class="form-group {% if field.errors %} has-error{% endif -%}
-                                   {%- if field.flags.required %} required{% endif -%}
-                                   col-xs-6
-            ">
-              {{subfield.label(class="control-label")|safe}}
-              {{subfield(class="form-control", **kwargs)|safe}}
-              {%- if subfield.errors %}
-                {%- for error in subfield.errors %}
-                  <p class="help-block">{{error}}</p>
-                {%- endfor %}
-              {%- elif subfield.description -%}
-                <p class="help-block">{{subfield.description|safe}}</p>
-              {%- endif %}
-            </div>
-          {%- endfor %}
+          <div class="row">
+            <legend>{{ field.label }}</legend>
+            {%- for subfield in field %}
+              <div class="form-group col-xs-6 {% if subfield.errors %} has-error{% endif -%}
+                                     {%- if subfield.flags.required %} required{% endif -%}
+
+              ">
+                {{ subfield.label(class="control-label")|safe }}
+                {{ subfield(class="form-control", **kwargs)|safe }}
+                {%- if subfield.errors %}
+                  {%- for error in subfield.errors %}
+                    <p class="help-block">{{error}}</p>
+                  {%- endfor %}
+                {%- elif subfield.description -%}
+                  <p class="help-block">{{ subfield.description|safe }}</p>
+                {%- endif %}
+              </div>
+            {%- endfor %}
+          </div>
         </div>
       {%- endif %}
     {%- endif %}
   {%- endfor %}
-
 </form>
 {%- endmacro %}
 
