@@ -133,7 +133,10 @@ class DrawForm(FlaskForm):
                 del self.resilient_population
                 del self.city_forecast
 
-            self.lockdown.choices = character_list[:]
+            if c.possible_lockdown:
+                self.lockdown.choices = character_list[:]
+            else:
+                del self.lockdown
 
             self.exile_cities.choices = [
                 (city.name, (city, 0))

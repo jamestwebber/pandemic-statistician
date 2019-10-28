@@ -70,6 +70,8 @@ infection_cards_in_box_six = Counter(
     }
 )
 
+possible_lockdown = False
+
 max_inf = max(city.infection_cards for city in cities if city != hollow_men)
 
 
