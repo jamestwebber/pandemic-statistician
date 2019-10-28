@@ -114,9 +114,12 @@ def forecast_widget(field, **kwargs):
 def select_cities(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
+    collapse = kwargs.pop("collapse", "")
     html = [
         "<div {}>".format(
-            widgets.html_params(id=field_id, class_="row", data_toggle="buttons")
+            widgets.html_params(
+                id=field_id, class_=f"row {collapse}", data_toggle="buttons"
+            )
         )
     ]
     stack_0 = 1
@@ -143,6 +146,7 @@ def select_cities(field, **kwargs):
             ).format(city.color, widgets.html_params(**options), field_id, city.name)
         )
     html.append("</div>")
+
     return widgets.HTMLString("".join(html))
 
 

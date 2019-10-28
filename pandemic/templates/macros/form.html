@@ -36,7 +36,23 @@
 
   {%- for field in form %}
     {% if not bootstrap_is_hidden_field(field) -%}
-      {%- if not field.type == 'FormField' -%}
+      {%- if field.name == "exile_cities" -%}
+        <div class="form-group">
+          <button class="btn btn-default" type="button" data-toggle="collapse"
+                  data-target="#{{ field.name }}" aria-expanded="false"
+                  aria-controls="{{ field.name }}">
+            {{ field.label(class="control-label")|safe }}
+          </button>
+          {{ field(collapse="collapse", **kwargs)|safe }}
+          {%- if field.errors %}
+            {%- for error in field.errors %}
+              <p class="help-block">{{error}}</p>
+            {%- endfor %}
+          {%- elif field.description -%}
+            <p class="help-block">{{ field.description|safe }}</p>
+          {%- endif %}
+        </div>
+      {%- elif not field.type == 'FormField' -%}
         {{ wtf.form_field(field) }}
       {%- else -%}
         <div class="form-group">
@@ -45,7 +61,6 @@
             {%- for subfield in field %}
               <div class="form-group col-xs-6 {% if subfield.errors %} has-error{% endif -%}
                                      {%- if subfield.flags.required %} required{% endif -%}
-
               ">
                 {{ subfield.label(class="control-label")|safe }}
                 {{ subfield(class="form-control", **kwargs)|safe }}
