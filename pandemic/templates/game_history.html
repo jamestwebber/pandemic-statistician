@@ -4,7 +4,47 @@
 
 {% block content %}
   {{ super() }}
-  {{ game_macros.game_history(game) }}
+  <div class="container-fluid">
+    <div class="row col-sm-12 h2">Details for Game {{ game.id }}</div>
+    <div class="row col-sm-8 h4">
+      <div class="col-sm-5">Funding Rate</div>
+      <div class="col-sm-5">{{ game.funding_rate }}</div>
+    </div>
+    <div class="row col-sm-12 h2">Characters</div>
+    <div class="row col-sm-8">
+    {% if game.characters %}
+      {% for char in game.characters %}
+        <div class="row col-sm-12">
+          <div class="col-sm-1">{{ char.turn_num + 1 }}</div>
+          <div class="col-sm-3">{{ char.character.first_name }}</div>
+          <div class="col-sm-3">{{ char.character.middle_name }}</div>
+          <div class="col-sm-3">{{ char.character.name }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="row col-sm-12">No characters have been selected</div>
+    {% endif %}
+    </div>
+    <div class="row col-sm-12 h2">Turns</div>
+    <div class="row col-sm-12 h3">
+      <div class="row col-sm-1">#</div>
+      <div class="row col-sm-4">Cities Infected</div>
+      <div class="row col-sm-2">Epidemic?</div>
+    </div>
+    {%- for turn in game.turns %}
+      <div class="row col-sm-12 h4">
+        <div class="row col-sm-1">
+          <a href={{ url_for('main.replay', game_id=game.id, turn_num=turn.turn_num) }}>
+            <span class="glyphicon glyphicon-backward" aria-hidden="true"></span> {{ turn.turn_num }}
+          </a>
+        </div>
+        <div class="row col-sm-4">{% if turn.infections %}{{ turn.infections | join(', ') }}{% else %}No cities{% endif %}</div>
+        <div class="row col-sm-2">{% if turn.epidemic %}{{ turn.epidemic | join(', ') }}{% else %}-{% endif %}</div>
+      </div>
+    {% else %}
+      <div class="row col-sm-12">No turns have been played yet</div>
+    {%- endfor %}
+  </div>
   {{ game_macros.game_state(game_state) }}
 {% endblock %}
 
