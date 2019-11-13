@@ -43,7 +43,7 @@ cities = [
     City("Cairo", "black", 4, 3),
     # City("Delhi", "black", 1, 1),
     City("Istanbul", "black", 4, 3),
-    # City("Kolkata", "black", 1, 1),
+    City("Kolkata", "black", 1, 1),
     City("Moscow", "black", 1, 0),  # due to lockdown
     # City("New Mumbai", "black", 2, 2),
     # City("Riyadh", "black", 2, 2),
@@ -61,16 +61,16 @@ player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
     {
         City("Istanbul", "black", 4, 3): 1,
-        City("Jacksonville", "yellow", 4, 3): 2,
+        City("Jacksonville", "yellow", 4, 3): 1,
         City("Kinshasa", "yellow", 1, 1): 1,
         City("Lima", "yellow", 1, 1): 1,
         City("Los Angeles", "yellow", 1, 1): 1,
-        City("San Francisco", "blue", 2, 2): 2,
-        City("Washington", "blue", 4, 3): 3,
+        City("San Francisco", "blue", 2, 2): 1,
+        City("Washington", "blue", 4, 3): 2,
     }
 )
 
-possible_lockdown = False
+possible_lockdown = False  # TODO: Check after next game
 
 max_inf = max(city.infection_cards for city in cities if city != hollow_men)
 
@@ -108,7 +108,7 @@ infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 15
+extra_cards = 15  # TODO: Check after next game
 
 # number of epidemics is based on the number of city cards in starting deck
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}

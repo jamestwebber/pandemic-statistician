@@ -149,9 +149,9 @@ class DrawForm(FlaskForm):
             del self.epidemic
             del self.second_epidemic
         else:
-            max_stack = max(game_state["stack"])
+            epi_stack = -6 if game_state["stack"][-6] else max(game_state["stack"])
             epidemic_cities = [("", "")] + [
-                (city.name, city.name) for city in game_state["stack"][max_stack]
+                (city.name, city.name) for city in game_state["stack"][epi_stack]
             ]
             self.epidemic.choices = epidemic_cities
 
