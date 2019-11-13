@@ -153,9 +153,12 @@ def select_cities(field, **kwargs):
 def authorization(field, **kwargs):
     kwargs.setdefault("type", "checkbox")
     field_id = kwargs.pop("id", field.id)
+    collapse = kwargs.pop("collapse", "")
     html = [
         "<div {}>".format(
-            widgets.html_params(id=field_id, class_="row", data_toggle="buttons")
+            widgets.html_params(
+                id=field_id, class_=f"row {collapse}", data_toggle="buttons"
+            )
         )
     ]
     for value, ch, checked in field.iter_choices():

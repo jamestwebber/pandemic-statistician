@@ -101,8 +101,10 @@ characters = [
 ]
 
 
-infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 9]  # infection rates per epidemic
+infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 6]  # infection rates per epidemic
 # note: -1 is game setup, infect 9 cities
+
+setup_men = 3  # number of hollow men during game setup
 
 # color codes for CSS styles
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}

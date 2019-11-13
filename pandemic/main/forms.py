@@ -194,9 +194,9 @@ class SetupInfectForm(FlaskForm):
             for _ in range(game_state["stack"][1][city])
         ]
 
-    def validate_cities(self, field):
+    def validate_cities(self, field, setup=True):
         n_infected = sum(1 for n in field.data if n != c.hollow_men.name)
-        if n_infected != c.infection_rates[self.epidemics]:
+        if n_infected != (c.infection_rates[self.epidemics] + c.setup_men * setup):
             field.data = []
             raise ValidationError("You didn't infect the right number of cities")
 
@@ -244,7 +244,7 @@ class InfectForm(SetupInfectForm):
                 self.skip_infection.data = []
                 raise ValidationError("You shouldn't be infecting any cities")
         else:
-            super(InfectForm, self).validate_cities(field)
+            super(InfectForm, self).validate_cities(field, setup=False)
 
     def validate_skip_infection(self, field):
         validate_auth(field, "One Quiet Night")

@@ -36,7 +36,7 @@
 
   {%- for field in form %}
     {% if not bootstrap_is_hidden_field(field) -%}
-      {%- if field.name == "exile_cities" -%}
+      {%- if field.name == "exile_cities" or field.type == 'SelectMultipleField' -%}
         <div class="form-group">
           <button class="btn btn-default" type="button" data-toggle="collapse"
                   data-target="#{{ field.name }}" aria-expanded="false"

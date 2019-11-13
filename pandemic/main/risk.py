@@ -94,7 +94,7 @@ def epi_infection_risk(stack, infection_rate, p_epi, p_city_epi):
     inf_risk = defaultdict(list)
     hollow_risk = []
 
-    epi_stack = -6 if game_state["stack"][-6] else max(game_state["stack"])
+    epi_stack = -6 if stack[-6] else max(stack)
 
     stack_n = sum(stack[epi_stack].values())
     for city in stack[epi_stack]:
