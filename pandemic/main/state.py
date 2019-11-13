@@ -35,10 +35,12 @@ def decrement_stack(stack):
 
 
 def epidemic(stack, epidemic_city):
-    if stack[max(stack)][epidemic_city] < 1:
+    epi_stack = -6 if stack[-6] else max(stack)
+
+    if stack[epi_stack][epidemic_city] < 1:
         flash("WARNING: this epidemic shouldn't be possible, check records!")
     else:
-        stack[max(stack)][epidemic_city] -= 1
+        stack[epi_stack][epidemic_city] -= 1
         stack[0][epidemic_city] += 1
 
     return clean_stack(stack)
@@ -82,7 +84,7 @@ def get_game_state(game, draw_phase=True):
             stack[0][city] = city.infection_cards
         else:
             stack[1][city] = city.infection_cards - c.infection_cards_in_box_six[city]
-            stack[-1][city] = c.infection_cards_in_box_six[city]
+            stack[-6][city] = c.infection_cards_in_box_six[city]
 
     current_app.logger.info(f"City cards in starting deck: {city_cards}")
     current_app.logger.info(f"Epidemics: {epidemic_cards}\n")
@@ -134,7 +136,7 @@ def get_game_state(game, draw_phase=True):
         if turn.forecasts:
             current_app.logger.debug("forecast")
 
-            new_stack = defaultdict(Counter, {0: stack[0], -1: stack[-1]})
+            new_stack = defaultdict(Counter, {s: stack[s] for s in stack if s < 1})
             for cf in turn.forecasts:
                 new_stack[cf.stack_order][cf.city] += 1
                 j = min(j for j in stack if j > 0 and stack[j][cf.city] > 0)
