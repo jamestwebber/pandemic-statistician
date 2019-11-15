@@ -63,7 +63,8 @@ class CityExile(db.Model):
     __tablename__ = "exiled_cities"
     turn_id = db.Column(db.Integer, db.ForeignKey("turns.id"), primary_key=True)
     city_id = db.Column(db.Integer, db.ForeignKey("cities.id"), primary_key=True)
-    count = db.Column(db.Integer, primary_key=True)
+    count = db.Column(db.Integer)
+    to_stack = db.Column(db.Integer)
 
     city = db.relationship(
         "City",
@@ -86,7 +87,7 @@ class CityInfection(db.Model):
     __tablename__ = "infections"
     turn_id = db.Column(db.Integer, db.ForeignKey("turns.id"), primary_key=True)
     city_id = db.Column(db.Integer, db.ForeignKey("cities.id"), primary_key=True)
-    count = db.Column(db.Integer, primary_key=True)
+    count = db.Column(db.Integer)
 
     city = db.relationship(
         "City",

@@ -38,7 +38,7 @@
     {% if not bootstrap_is_hidden_field(field) -%}
       {%- if field.name == "exile_cities" or field.type == 'SelectMultipleField' -%}
         <div class="form-group">
-          <button class="btn btn-default" type="button" data-toggle="collapse"
+          <button class="btn btn-warning" type="button" data-toggle="collapse"
                   data-target="#{{ field.name }}" aria-expanded="false"
                   aria-controls="{{ field.name }}">
             {{ field.label(class="control-label")|safe }}

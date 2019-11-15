@@ -71,6 +71,15 @@ infection_cards_in_box_six = Counter(
 )
 
 possible_lockdown = False  # TODO: Check after next game
+possible_relocation = True
+
+# bitflags for the different ways of removing cities from discard
+city_flags = {
+    1: (2, 1), # resilient pop
+    2: (1, 1), # lockdown
+    3: (3, 2),
+    4: (4, 4), # relocation
+}
 
 max_inf = max(city.infection_cards for city in cities if city != hollow_men)
 

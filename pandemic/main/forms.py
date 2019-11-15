@@ -106,6 +106,9 @@ class DrawForm(FlaskForm):
     lockdown = SelectMultipleField(
         "Lockdown", widget=wdg.authorization, description="Authorize City Lockdown"
     )
+    relocation = SelectMultipleField(
+        "Relocation", widget=wdg.authorization, description="Relocation (Unfunded Event)"
+    )
     monitor = FormField(MonitorField, label="Monitor")
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
@@ -122,6 +125,7 @@ class DrawForm(FlaskForm):
             del self.resilient_population
             del self.city_forecast
             del self.lockdown
+            del self.relocation
             del self.monitor
         else:
             character_list = [(ch.character.name, ch) for ch in characters]
@@ -137,6 +141,11 @@ class DrawForm(FlaskForm):
                 self.lockdown.choices = character_list[:]
             else:
                 del self.lockdown
+
+            if c.possible_relocation:
+                self.relocation.choices = character_list[:]
+            else:
+                del self.relocation
 
             self.exile_cities.choices = [
                 (city.name, (city, 0))
@@ -167,6 +176,9 @@ class DrawForm(FlaskForm):
         validate_auth(field, "City Forecast")
 
     def validate_lockdown(self, field):
+        validate_auth(field, "Lockdown")
+
+    def validate_relocation(self, field):
         validate_auth(field, "Lockdown")
 
     def validate_second_epidemic(self, field):
@@ -254,16 +266,23 @@ class RemoveCityForm(FlaskForm):
     cities = SelectMultipleField(
         "Resilient Cities",
         widget=wdg.select_cities,
-        description="Select resilient pop (up to 2 copies) and/or lockdown cities",
+        description="Select resilient pop and/or lockdown cities",
     )
     submit = SubmitField("Submit")
     game = HiddenField("game_id", validators=[InputRequired()])
 
-    def __init__(self, game_state, max_s, n_cities, *args, **kwargs):
+    def __init__(self, game_state, max_s, city_flag, *args, **kwargs):
         super(RemoveCityForm, self).__init__(*args, **kwargs)
 
         self.game.data = game_state["game_id"]
-        self.n_cities = n_cities
+        self.city_flag = city_flag
+
+        if city_flag & 4:
+            self.cities.description = "Select cities for relocation"
+        elif city_flag == 1:
+            self.cities.description = "Select city cards (up to 2) for resilient pop"
+        elif city_flag == 2:
+            self.cities.description = "Select lockdown city"
 
         self.cities.choices = [
             (city.name, (city, i))
@@ -274,17 +293,20 @@ class RemoveCityForm(FlaskForm):
         ]
 
     def validate_cities(self, field):
-        if not (0 < len(field.data) < self.n_cities + 2):
+        n_cities = len(field.data)
+        u_cities = len(set(field.data))
+
+        expected_n, expected_u = c.city_flags.get(self.city_flag, (4, 4))
+
+        if n_cities == 0:
+            raise ValidationError("You didn't select any cities")
+        elif n_cities > expected_n:
+            field.data = []
+            raise ValidationError(f"You can pick at most {expected_n} city cards")
+        elif u_cities > expected_u:
             field.data = []
             raise ValidationError(
-                "You must pick {} city cards".format(
-                    "one or two" if self.n_cities == 1 else "two or three"
-                )
-            )
-        elif len(set(field.data)) > self.n_cities:
-            field.data = []
-            raise ValidationError(
-                f"You can remove at most {self.n_cities} different cities"
+                f"You can remove at most {expected_u} different cities"
             )
 
 

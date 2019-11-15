@@ -131,7 +131,7 @@ def get_game_state(game, draw_phase=True):
                 else:
                     flash("WARNING: Couldn't find cities in stack 0 to exile")
 
-                stack[-1][city_exile.city] += city_exile.count
+                stack[city_exile.to_stack][city_exile.city] += city_exile.count
 
         if turn.forecasts:
             current_app.logger.debug("forecast")

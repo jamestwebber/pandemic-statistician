@@ -69,7 +69,7 @@ def check_game_id(game_id: int = None):
     return game, this_turn, None
 
 
-def exile_cities(this_turn: Turn, removed_cities: Counter):
+def exile_cities(this_turn: Turn, removed_cities: Counter, to_stack: int):
     for city_name in removed_cities:
         city = City.query.filter_by(name=city_name).one()
         ci = CityExile(
@@ -78,6 +78,7 @@ def exile_cities(this_turn: Turn, removed_cities: Counter):
             turn=this_turn,
             city=city,
             count=removed_cities[city_name],
+            to_stack=to_stack,
         )
         this_turn.exiled.append(ci)
 
@@ -127,7 +128,7 @@ def draw(game_id: int = None):
 
     if form.validate_on_submit():
         if form.exile_cities and form.exile_cities.data:
-            exile_cities(this_turn, Counter(form.exile_cities.data))
+            exile_cities(this_turn, Counter(form.exile_cities.data), -6)
 
         if form.monitor and form.monitor.data:
             this_turn.monitor = form.monitor.data["monitor_count"]
@@ -145,22 +146,24 @@ def draw(game_id: int = None):
         else:
             max_s = 0
 
-        n_cities = int(forms.auth_valid(form.resilient_population)) + int(
-            forms.auth_valid(form.lockdown)
+        city_flag = (
+            forms.auth_valid(form.resilient_population)
+            + 2 * forms.auth_valid(form.lockdown)
+            + 4 * forms.auth_valid(form.relocation)
         )
 
         do_forecast = forms.auth_valid(form.city_forecast)
 
         db.session.commit()
 
-        if n_cities > 0:
+        if city_flag > 0:
             # less precise but easier to code version: show all the cities up to
             # the max stack, and rely on players to make correct selections (...)
             return redirect(
                 url_for(
                     ".removecity",
                     max_stack=max_s,
-                    n_cities=n_cities,
+                    city_flag=city_flag,
                     also_forecast=int(do_forecast),
                 )
             )
@@ -175,10 +178,10 @@ def draw(game_id: int = None):
 
 
 @main.route(
-    "/removecity/<int:max_stack>/<int:n_cities>/<int:also_forecast>",
+    "/removecity/<int:max_stack>/<int:city_flag>/<int:also_forecast>",
     methods=("GET", "POST"),
 )
-def removecity(max_stack: int = 0, n_cities: int = 1, also_forecast: int = 0):
+def removecity(max_stack: int = 0, city_flag: int = 1, also_forecast: int = 0):
     game, this_turn, redi = check_game_id()
     if redi is not None:
         return redi
@@ -187,20 +190,30 @@ def removecity(max_stack: int = 0, n_cities: int = 1, also_forecast: int = 0):
         flash("Need to draw cards first", "error")
         return redirect(url_for(".draw"))
 
+    if city_flag < 1 or city_flag > 7:
+        flash("That's not allowed", "error")
+        return redirect(url_for(".draw")) # ???
+
     game_state = get_game_state(game)
 
-    form = forms.RemoveCityForm(game_state, max_stack, n_cities)
+    form = forms.RemoveCityForm(game_state, max_stack, city_flag)
 
     if form.validate_on_submit():
         if form.game.data != game.id:
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        exile_cities(this_turn, Counter(form.cities.data))
+        exile_cities(
+            this_turn,
+            Counter(form.cities.data),
+            -6 if city_flag & 4 else -1
+        )
 
         db.session.commit()
 
-        if also_forecast:
+        if city_flag & 4 and city_flag - 4:
+            return redirect(url_for(".removecity", max_stack=max_stack, city_flag=city_flag - 4, also_forecast=also_forecast))
+        elif also_forecast:
             return redirect(url_for(".forecast"))
         else:
             return redirect(url_for(".infect"))
