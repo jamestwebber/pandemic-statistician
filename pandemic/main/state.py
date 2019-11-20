@@ -94,7 +94,7 @@ def get_game_state(game, draw_phase=True):
     for i, turn in enumerate(turns):
         stack = clean_stack(stack)
         current_app.logger.debug(f"\non turn {turn.turn_num}:")
-        log_stack(stack)
+        # log_stack(stack)
 
         if turn.monitor:
             current_app.logger.debug(
@@ -146,7 +146,7 @@ def get_game_state(game, draw_phase=True):
                 new_stack[j + 8] = stack[j]
 
             stack = new_stack
-            log_stack(stack)
+            # log_stack(stack)
 
         stack = clean_stack(stack)
 

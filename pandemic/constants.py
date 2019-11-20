@@ -61,7 +61,7 @@ player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
     {
         City("Istanbul", "black", 4, 3): 1,
-        City("Jacksonville", "yellow", 4, 3): 1,
+        City("Jacksonville", "yellow", 4, 3): 2,
         City("Kinshasa", "yellow", 1, 1): 1,
         City("Lima", "yellow", 1, 1): 1,
         City("Los Angeles", "yellow", 1, 1): 1,
