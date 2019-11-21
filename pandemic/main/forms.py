@@ -106,8 +106,15 @@ class DrawForm(FlaskForm):
     lockdown = SelectMultipleField(
         "Lockdown", widget=wdg.authorization, description="Authorize City Lockdown"
     )
+    inoculation = SelectMultipleField(
+        "Inoculation",
+        widget=wdg.authorization,
+        description="Authorize Inoculation Unit",
+    )
     relocation = SelectMultipleField(
-        "Relocation", widget=wdg.authorization, description="Relocation (Unfunded Event)"
+        "Relocation",
+        widget=wdg.authorization,
+        description="Relocation (Unfunded Event)",
     )
     monitor = FormField(MonitorField, label="Monitor")
     submit = SubmitField("Submit")
@@ -125,6 +132,7 @@ class DrawForm(FlaskForm):
             del self.resilient_population
             del self.city_forecast
             del self.lockdown
+            del self.inoculation
             del self.relocation
             del self.monitor
         else:
@@ -133,9 +141,11 @@ class DrawForm(FlaskForm):
             if game_state["funding"] > 0:
                 self.resilient_population.choices = character_list[:]
                 self.city_forecast.choices = character_list[:]
+                self.inoculation.choices = character_list[:]
             else:
                 del self.resilient_population
                 del self.city_forecast
+                del self.inoculation
 
             if c.possible_lockdown:
                 self.lockdown.choices = character_list[:]
@@ -178,8 +188,11 @@ class DrawForm(FlaskForm):
     def validate_lockdown(self, field):
         validate_auth(field, "Lockdown")
 
+    def validate_inoculation(self, field):
+        validate_auth(field, "Inoculation")
+
     def validate_relocation(self, field):
-        validate_auth(field, "Lockdown")
+        validate_auth(field, "Relocation")
 
     def validate_second_epidemic(self, field):
         if field.data and not self.epidemic.data:
@@ -277,12 +290,14 @@ class RemoveCityForm(FlaskForm):
         self.game.data = game_state["game_id"]
         self.city_flag = city_flag
 
-        if city_flag & 4:
+        if city_flag & 8:
+            self.cities.description = "Select cities for inoculation"
+        elif city_flag & 4:
             self.cities.description = "Select cities for relocation"
-        elif city_flag == 1:
-            self.cities.description = "Select city cards (up to 2) for resilient pop"
         elif city_flag == 2:
             self.cities.description = "Select lockdown city"
+        elif city_flag == 1:
+            self.cities.description = "Select cities (up to 2) for resilient pop"
 
         self.cities.choices = [
             (city.name, (city, i))
@@ -296,7 +311,7 @@ class RemoveCityForm(FlaskForm):
         n_cities = len(field.data)
         u_cities = len(set(field.data))
 
-        expected_n, expected_u = c.city_flags.get(self.city_flag, (4, 4))
+        expected_n, expected_u = c.city_flags.get(self.city_flag, (3, 3))
 
         if n_cities == 0:
             raise ValidationError("You didn't select any cities")

@@ -27,10 +27,10 @@ cities = [
     City("Frankfurt", "blue", 2, 2),
     City("St. Petersburg", "blue", 1, 1),
     City("Bogotá", "yellow", 2, 2),
-    City("Buenos Aires", "yellow", 2, 2),
+    City("Buenos Aires", "yellow", 2, 0),  # due to relocation event
     # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
-    City("Khartoum", "yellow", 1, 1),
+    City("Khartoum", "yellow", 1, 1),  # possible lockdown
     City("Kinshasa", "yellow", 1, 1),
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
@@ -41,14 +41,24 @@ cities = [
     # City("Antananarivo", "black", 2, 2),
     City("Baghdad", "black", 2, 2),
     City("Cairo", "black", 4, 3),
-    # City("Delhi", "black", 1, 1),
+    City("Delhi", "black", 1, 1),
     City("Istanbul", "black", 4, 3),
     City("Kolkata", "black", 1, 1),
     City("Moscow", "black", 1, 0),  # due to lockdown
-    # City("New Mumbai", "black", 2, 2),
+    City("New Mumbai", "black", 2, 2),
     # City("Riyadh", "black", 2, 2),
     City("Tehran", "black", 1, 1),
     City("Tripoli", "black", 4, 3),
+    # City("Bangkok", "red", 1, 1),
+    # City("Ho Chi Minh City", "red", 1, 1),
+    # City("Hong Kong", "red", 1, 1),
+    City("Jakarta", "red", 1, 1),
+    # City("Manila", "red", 1, 1),
+    # City("Osaka", "red", 1, 1),
+    # City("Seoul", "red", 1, 1),
+    # City("Shanghai", "red", 1, 1),
+    # City("Tokyo", "red", 1, 1),
+    # City("Osaka", "red", 1, 1),
     # the hollow men
     City("Hollow Men Gather", "white", 0, 4),
 ]
@@ -60,25 +70,27 @@ hollow_men = City("Hollow Men Gather", "white", 0, 4)
 player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
     {
-        City("Istanbul", "black", 4, 3): 1,
-        City("Jacksonville", "yellow", 4, 3): 2,
+        City("Jacksonville", "yellow", 4, 3): 1,
         City("Kinshasa", "yellow", 1, 1): 1,
         City("Lima", "yellow", 1, 1): 1,
         City("Los Angeles", "yellow", 1, 1): 1,
-        City("San Francisco", "blue", 2, 2): 1,
-        City("Washington", "blue", 4, 3): 2,
+        City("Washington", "blue", 4, 3): 1,
     }
 )
 
-possible_lockdown = False  # TODO: Check after next game
-possible_relocation = True
+possible_lockdown = True
+possible_relocation = False
 
 # bitflags for the different ways of removing cities from discard
 city_flags = {
-    1: (2, 1), # resilient pop
-    2: (1, 1), # lockdown
+    1: (2, 1),  # resilient pop
+    2: (1, 1),  # lockdown
     3: (3, 2),
-    4: (4, 4), # relocation
+    4: (3, 1),  # relocation
+    5: (3, 1),
+    6: (3, 1),
+    7: (3, 1),
+    8: (3, 3),  # inoculation unit
 }
 
 max_inf = max(city.infection_cards for city in cities if city != hollow_men)
@@ -119,7 +131,7 @@ setup_men = 3  # number of hollow men during game setup
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 15  # TODO: Check after next game
+extra_cards = 13
 
 # number of epidemics is based on the number of city cards in starting deck
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}

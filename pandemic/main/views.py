@@ -149,7 +149,8 @@ def draw(game_id: int = None):
         city_flag = (
             forms.auth_valid(form.resilient_population)
             + 2 * forms.auth_valid(form.lockdown)
-            + 4 * forms.auth_valid(form.relocation)
+            + 4 * forms.auth_valid(form.inoculation)
+            + 8 * forms.auth_valid(form.relocation)
         )
 
         do_forecast = forms.auth_valid(form.city_forecast)
@@ -192,7 +193,7 @@ def removecity(max_stack: int = 0, city_flag: int = 1, also_forecast: int = 0):
 
     if city_flag < 1 or city_flag > 7:
         flash("That's not allowed", "error")
-        return redirect(url_for(".draw")) # ???
+        return redirect(url_for(".draw"))  # ???
 
     game_state = get_game_state(game)
 
@@ -203,16 +204,28 @@ def removecity(max_stack: int = 0, city_flag: int = 1, also_forecast: int = 0):
             flash("Game ID did not match session", "error")
             return redirect(url_for(".begin"))
 
-        exile_cities(
-            this_turn,
-            Counter(form.cities.data),
-            -6 if city_flag & 4 else -1
-        )
+        exile_cities(this_turn, Counter(form.cities.data), -6 if city_flag & 8 else -1)
 
         db.session.commit()
 
-        if city_flag & 4 and city_flag - 4:
-            return redirect(url_for(".removecity", max_stack=max_stack, city_flag=city_flag - 4, also_forecast=also_forecast))
+        if city_flag & 8 and city_flag - 8:
+            return redirect(
+                url_for(
+                    ".removecity",
+                    max_stack=max_stack,
+                    city_flag=city_flag - 8,
+                    also_forecast=also_forecast,
+                )
+            )
+        elif city_flag & 4 and city_flag - 4:
+            return redirect(
+                url_for(
+                    ".removecity",
+                    max_stack=max_stack,
+                    city_flag=city_flag - 4,
+                    also_forecast=also_forecast,
+                )
+            )
         elif also_forecast:
             return redirect(url_for(".forecast"))
         else:
