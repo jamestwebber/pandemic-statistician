@@ -60,11 +60,11 @@ cities = [
     # City("Tokyo", "red", 1, 1),
     # City("Osaka", "red", 1, 1),
     # the hollow men
-    City("Hollow Men Gather", "white", 0, 4),
+    City("Hollow Men Gather", "white", 0, 8),
 ]
 
 # copy for convenience
-hollow_men = City("Hollow Men Gather", "white", 0, 4)
+hollow_men = City("Hollow Men Gather", "white", 0, 8)
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
