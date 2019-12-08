@@ -86,27 +86,30 @@ def infection_risk(stack, infection_rate, p_no_epi):
 
 
 def epi_infection_risk(stack, infection_rate, p_epi, p_city_epi):
-    p_inf0 = lambda j, n, cs, ir: (
-        p_city_epi[c] * hg_pmf(j, n + 1, cs + 1, ir)
-        + (1 - p_city_epi[c]) * hg_pmf(j, n + 1, cs, ir)
+    p_inf0 = lambda pce, j, n, s0, ir: (
+        pce * hg_pmf(j, n, s0 + 1, ir) + (1 - pce) * hg_pmf(j, n, s0, ir)
     )
 
     inf_risk = defaultdict(list)
     hollow_risk = []
 
     epi_stack = -6 if stack[-6] else max(stack)
+    stack_n = sum(stack[0].values()) + 1
 
-    stack_n = sum(stack[epi_stack].values())
-    for city in stack[epi_stack]:
+    for city in set(stack[epi_stack]).difference(stack[0]):
+        inf_risk[city].append(
+            p_epi * p_city_epi[city] * hg_pmf(1, stack_n, 1, infection_rate)
+        )
+
+    for city in stack[0]:
         if city != c.hollow_men:
             inf_risk[city].extend(
-                p_epi * p_inf0(j, stack_n, stack[epi_stack][city], infection_rate)
-                for j in range(1, stack[epi_stack][city] + 1)
+                p_epi
+                * p_inf0(p_city_epi[city], j, stack_n, stack[0][city], infection_rate)
+                for j in range(1, stack[0][city] + 1)
             )
         else:
-            hollow_risk.extend(
-                hm_risk(p_epi, infection_rate, stack_n, stack[epi_stack][city])
-            )
+            hollow_risk.extend(hm_risk(p_epi, infection_rate, stack_n, stack[0][city]))
 
     extra_risk, extra_hollow_risk = inf_risks(stack, infection_rate - stack_n, p_epi)
 

@@ -74,9 +74,11 @@ def get_game_state(game, draw_phase=True):
     if game.turn_num == -1:
         ps_cards_drawn = 0
         epidemics = -1
+        skipped_epi = 0
     else:
         ps_cards_drawn = (len(turns) - 1 - draw_phase) * c.draw
         epidemics = 0
+        skipped_epi = 0
 
     stack = defaultdict(Counter)
     for city in c.cities:
@@ -102,7 +104,7 @@ def get_game_state(game, draw_phase=True):
                 f" skipped {turn.skipped_epi} epidemics"
             )
 
-            epidemics += turn.skipped_epi
+            skipped_epi += turn.skipped_epi
             ps_cards_drawn += turn.monitor * c.monitor
 
         if turn.epidemic:
@@ -194,8 +196,8 @@ def get_game_state(game, draw_phase=True):
         epidemic_stacks[i] -= 1
 
     if game.turn_num > -1:
-        if i_block < epidemics:
-            if j_block < epidemics:
+        if i_block < (epidemics + skipped_epi):
+            if j_block < (epidemics + skipped_epi):
                 assert i_block == j_block
                 # this epidemic has already been drawn
                 epidemic_risk = 0.0
@@ -220,11 +222,12 @@ def get_game_state(game, draw_phase=True):
         epidemic_risk = 0.0
         epidemic_in = epidemic_stacks[0]
 
+    epi_stack = -6 if stack[-6] else max(stack)
     epi_risk = defaultdict(
         float,
         {
-            city: stack[max(stack)][city] / sum(stack[max(stack)].values())
-            for city in stack[max(stack)]
+            city: stack[epi_stack][city] / sum(stack[epi_stack].values())
+            for city in stack[epi_stack]
         },
     )
 

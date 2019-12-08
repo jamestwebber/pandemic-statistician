@@ -30,7 +30,7 @@ cities = [
     City("Buenos Aires", "yellow", 2, 0),  # due to relocation event
     # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
-    City("Khartoum", "yellow", 1, 1),  # possible lockdown
+    City("Khartoum", "yellow", 1, 0),  # due to lockdown
     City("Kinshasa", "yellow", 1, 1),
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
@@ -50,7 +50,7 @@ cities = [
     City("Tehran", "black", 1, 1),
     City("Tripoli", "black", 4, 3),
     # City("Bangkok", "red", 1, 1),
-    # City("Ho Chi Minh City", "red", 1, 1),
+    City("Ho Chi Minh City", "red", 1, 1),
     # City("Hong Kong", "red", 1, 1),
     City("Jakarta", "red", 1, 1),
     # City("Manila", "red", 1, 1),
@@ -70,15 +70,13 @@ hollow_men = City("Hollow Men Gather", "white", 0, 8)
 player_cards_in_box_six = Counter()
 infection_cards_in_box_six = Counter(
     {
-        City("Jacksonville", "yellow", 4, 3): 1,
-        City("Kinshasa", "yellow", 1, 1): 1,
         City("Lima", "yellow", 1, 1): 1,
         City("Los Angeles", "yellow", 1, 1): 1,
         City("Washington", "blue", 4, 3): 1,
     }
 )
 
-possible_lockdown = True
+possible_lockdown = False
 possible_relocation = False
 
 # bitflags for the different ways of removing cities from discard
@@ -123,7 +121,7 @@ characters = [
 
 
 infection_rates = [2, 2, 2, 3, 3, 4, 4, 5, 6]  # infection rates per epidemic
-# note: -1 is game setup, infect 9 cities
+# note: -1 is game setup, infect 6 cities ( + hollow men)
 
 setup_men = 3  # number of hollow men during game setup
 
