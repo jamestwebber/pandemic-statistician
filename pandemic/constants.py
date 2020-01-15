@@ -31,7 +31,7 @@ cities = [
     # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
     City("Khartoum", "yellow", 1, 0),  # due to lockdown
-    City("Kinshasa", "yellow", 1, 1),
+    City("Kinshasa", "yellow", 1, 0),  # forsaken
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
     City("Los Angeles", "yellow", 1, 1),
@@ -49,16 +49,16 @@ cities = [
     # City("Riyadh", "black", 2, 2),
     City("Tehran", "black", 1, 1),
     City("Tripoli", "black", 4, 3),
-    # City("Bangkok", "red", 1, 1),
+    City("Bangkok", "red", 1, 1),
     City("Ho Chi Minh City", "red", 1, 1),
-    # City("Hong Kong", "red", 1, 1),
+    City("Hong Kong", "red", 1, 1),
     City("Jakarta", "red", 1, 1),
-    # City("Manila", "red", 1, 1),
-    # City("Osaka", "red", 1, 1),
-    # City("Seoul", "red", 1, 1),
-    # City("Shanghai", "red", 1, 1),
-    # City("Tokyo", "red", 1, 1),
-    # City("Osaka", "red", 1, 1),
+    City("Manila", "red", 1, 1),
+    City("Osaka", "red", 1, 1),
+    City("Seoul", "red", 1, 1),
+    City("Shanghai", "red", 1, 1),
+    City("Tokyo", "red", 1, 1),
+    City("Osaka", "red", 1, 1),
     # the hollow men
     City("Hollow Men Gather", "white", 0, 8),
 ]
@@ -68,13 +68,7 @@ hollow_men = City("Hollow Men Gather", "white", 0, 8)
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
-infection_cards_in_box_six = Counter(
-    {
-        City("Lima", "yellow", 1, 1): 1,
-        City("Los Angeles", "yellow", 1, 1): 1,
-        City("Washington", "blue", 4, 3): 1,
-    }
-)
+infection_cards_in_box_six = Counter()
 
 possible_lockdown = False
 possible_relocation = False
@@ -129,7 +123,7 @@ setup_men = 3  # number of hollow men during game setup
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 13
+extra_cards = 12
 
 # number of epidemics is based on the number of city cards in starting deck
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}
