@@ -255,7 +255,9 @@ class InfectForm(SetupInfectForm):
                 for _ in range(game_state["stack"][i][city])
             )
 
-            if len(choices) >= c.infection_rates[self.epidemics]:
+            n_cities = sum(1 for _, (city, _) in choices if city != c.hollow_men)
+
+            if n_cities >= c.infection_rates[self.epidemics]:
                 break
 
         self.cities.choices = choices
