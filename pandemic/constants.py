@@ -31,7 +31,7 @@ cities = [
     # City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
     City("Khartoum", "yellow", 1, 0),  # due to lockdown
-    City("Kinshasa", "yellow", 1, 0),  # forsaken
+    City("Kinshasa", "yellow", 1, 1),
     City("Lagos", "yellow", 4, 3),
     City("Lima", "yellow", 1, 1),
     City("Los Angeles", "yellow", 1, 1),
@@ -58,13 +58,13 @@ cities = [
     City("Seoul", "red", 1, 1),
     City("Shanghai", "red", 1, 1),
     City("Tokyo", "red", 1, 1),
-    City("Osaka", "red", 1, 1),
+    City("Utopia", "red", 1, 8),
     # the hollow men
-    City("Hollow Men Gather", "white", 0, 8),
+    City("Hollow Men Gather", "white", 0, 12),
 ]
 
 # copy for convenience
-hollow_men = City("Hollow Men Gather", "white", 0, 8)
+hollow_men = City("Hollow Men Gather", "white", 0, 12)
 
 # cards exiled to box six, needs to be updated per game
 player_cards_in_box_six = Counter()
