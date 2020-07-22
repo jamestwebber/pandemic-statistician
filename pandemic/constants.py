@@ -17,7 +17,7 @@ class City:
 cities = [
     City("Atlanta", "blue", 1, 0),  # due to lockdown
     City("Chicago", "blue", 2, 2),
-    # City("Johannesburg", "blue", 2, 2),
+    City("Johannesburg", "blue", 2, 2),
     City("London", "blue", 4, 3),
     City("New York", "blue", 4, 3),
     City("Washington", "blue", 4, 3),
@@ -28,7 +28,7 @@ cities = [
     City("St. Petersburg", "blue", 1, 1),
     City("Bogotá", "yellow", 2, 2),
     City("Buenos Aires", "yellow", 2, 0),  # due to relocation event
-    # City("Dar es Salaam", "yellow", 2, 2),
+    City("Dar es Salaam", "yellow", 2, 2),
     City("Jacksonville", "yellow", 4, 3),
     City("Khartoum", "yellow", 1, 0),  # due to lockdown
     City("Kinshasa", "yellow", 1, 1),
@@ -39,7 +39,7 @@ cities = [
     City("São Paulo", "yellow", 4, 3),
     City("Santiago", "yellow", 1, 1),
     # City("Antananarivo", "black", 2, 2),
-    City("Baghdad", "black", 2, 2),
+    City("Baghdad", "black", 2, 0),
     City("Cairo", "black", 4, 3),
     City("Delhi", "black", 1, 1),
     City("Istanbul", "black", 4, 3),
@@ -52,9 +52,9 @@ cities = [
     City("Bangkok", "red", 1, 1),
     City("Ho Chi Minh City", "red", 1, 1),
     City("Hong Kong", "red", 1, 1),
-    City("Jakarta", "red", 1, 1),
+    City("Jakarta", "red", 1, 0),
     City("Manila", "red", 1, 1),
-    City("Osaka", "red", 1, 1),
+    City("Osaka", "red", 1, 0),
     City("Seoul", "red", 1, 1),
     City("Shanghai", "red", 1, 1),
     City("Tokyo", "red", 1, 1),
@@ -123,7 +123,7 @@ setup_men = 3  # number of hollow men during game setup
 color_codes = {"blue": 0, "yellow": 1, "black": 2, "red": 3, "white": 4}
 
 # number of non-player cards in the deck (varies per game, needs to be kept up-to-date)
-extra_cards = 12
+extra_cards = 11
 
 # number of epidemics is based on the number of city cards in starting deck
 epidemics = {36: 5, 44: 6, 51: 7, 57: 8, 62: 9, -1: 10}
